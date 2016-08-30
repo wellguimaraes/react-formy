@@ -3,9 +3,9 @@ import at                   from 'lodash.at';
 import set                  from 'lodash.set';
 import formatFieldName      from './formatFieldName';
 
-export default function(FormalizedComponent) {
+export default function(WrappedComponent) {
 
-  const validateForm = FormalizedComponent.validateForm;
+  const validateForm = WrappedComponent.validateForm;
 
   return class extends Component {
     constructor(props) {
@@ -120,7 +120,7 @@ export default function(FormalizedComponent) {
         form        : this.state.form
       };
 
-      return <FormalizedComponent {...props}/>
+      return <WrappedComponent {...props}/>
 
     }
 

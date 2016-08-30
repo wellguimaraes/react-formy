@@ -1,14 +1,14 @@
 {
-  "name": "react-formalize",
+  "name": "react-formy",
   "version": "1.0.0",
   "description": "A light, simple and fast Higher Order Component to keep form state, inspired by redux-form",
-  "main": "./src/formalize.js",
+  "main": "./src/formy.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/wellguimaraes/react-formalize.git"
+    "url": "git+https://github.com/wellguimaraes/react-formy.git"
   },
   "keywords": [
     "react",
@@ -18,9 +18,9 @@
   "author": "Wellington Guimaraes",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/wellguimaraes/react-formalize/issues"
+    "url": "https://github.com/wellguimaraes/react-formy/issues"
   },
-  "homepage": "https://github.com/wellguimaraes/react-formalize#readme",
+  "homepage": "https://github.com/wellguimaraes/react-formy#readme",
   "dependencies": {
     "lodash.at": "^4.6.0",
     "lodash.set": "^4.3.2",
