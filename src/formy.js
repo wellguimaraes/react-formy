@@ -21,11 +21,13 @@ export default function(WrappedComponent) {
       this.handleChange = this.handleChange.bind(this);
     }
 
-    handleChange(e) {
-      const newValue      = e.nativeEvent ? e.nativeEvent.target.value : e;
-      const newFormValues = set({ ...this.state.form }, name, newValue);
+    handleChange(name) {
+      return (e) => {
+        const newValue      = e.nativeEvent ? e.nativeEvent.target.value : e;
+        const newFormValues = set({ ...this.state.form }, name, newValue);
 
-      return this.setState({ form: newFormValues });
+        return this.setState({ form: newFormValues });
+      };
     }
 
     handleSubmit(handler) {
@@ -70,7 +72,7 @@ export default function(WrappedComponent) {
         value   : at(this.state.form, name)[ 0 ],
         error   : this.state.errors[ name ],
         onBlur  : this.validate,
-        onChange: this.handleChange
+        onChange: this.handleChange(name)
       };
     }
 
