@@ -1,0 +1,29 @@
+{
+  "name": "react-formalize",
+  "version": "1.0.0",
+  "description": "A light, simple and fast Higher Order Component to keep form state, inspired by redux-form",
+  "main": "./src/formalize.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wellguimaraes/react-formalize.git"
+  },
+  "keywords": [
+    "react",
+    "forms",
+    "state"
+  ],
+  "author": "Wellington Guimaraes",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/wellguimaraes/react-formalize/issues"
+  },
+  "homepage": "https://github.com/wellguimaraes/react-formalize#readme",
+  "dependencies": {
+    "lodash.at": "^4.6.0",
+    "lodash.set": "^4.3.2",
+    "react": "^15.3.1"
+  }
+}
