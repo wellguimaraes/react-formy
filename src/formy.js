@@ -115,6 +115,7 @@ export default function(WrappedComponent) {
     render() {
 
       const props = {
+        ...this.props,
         handleSubmit: this.handleSubmit,
         field       : this.field,
         arrayField  : this.arrayField,
