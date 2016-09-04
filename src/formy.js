@@ -19,6 +19,7 @@ export default function(WrappedComponent) {
       this.validate     = this.validate.bind(this);
       this.resetForm    = this.resetForm.bind(this);
       this.handleChange = this.handleChange.bind(this);
+      this.handleBlur   = this.handleBlur.bind(this);
     }
 
     handleChange(name) {
@@ -33,11 +34,10 @@ export default function(WrappedComponent) {
       };
     }
 
-    handleFocus(name) {
+    handleBlur(name) {
       return () => {
-        this.setState({
-          touched: { ...this.state.touched, [name]: true }
-        });
+        this.setState({ touched: { ...this.state.touched, [name]: true } });
+        this.validate();
       }
     }
 
@@ -89,8 +89,7 @@ export default function(WrappedComponent) {
         name    : name,
         value   : at(this.state.form, name)[ 0 ],
         error   : this.hasTouched(name) && this.state.errors[ name ],
-        onFocus : this.handleFocus(name),
-        onBlur  : this.validate,
+        onBlur  : this.handleBlur(name),
         onChange: this.handleChange(name)
       };
     }
