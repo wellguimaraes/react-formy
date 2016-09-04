@@ -11,7 +11,7 @@ export default function(WrappedComponent) {
     constructor(props) {
       super(props);
 
-      this.state = { form: {}, errors: {} };
+      this.state = { form: {}, errors: {}, touched: {} };
 
       this.field        = this.field.bind(this);
       this.arrayField   = this.arrayField.bind(this);
@@ -26,15 +26,31 @@ export default function(WrappedComponent) {
         const newValue      = e.nativeEvent ? e.nativeEvent.target.value : e;
         const newFormValues = set({ ...this.state.form }, name, newValue);
 
-        return this.setState({ form: newFormValues });
+        this.setState({
+          form   : newFormValues,
+          touched: { ...this.state.touched, [name]: true }
+        });
       };
+    }
+
+    handleFocus(name) {
+      return () => {
+        this.setState({
+          touched: { ...this.state.touched, [name]: true }
+        });
+      }
     }
 
     handleSubmit(handler) {
       return (e) => {
         e.preventDefault();
+        this.setState({ submitted: true });
         this.validate().then(() => handler && handler(this.state.form))
       };
+    }
+
+    hasTouched(fieldName) {
+      return this.state.submitted || this.state.touched.hasOwnProperty(fieldName);
     }
 
     validate() {
@@ -59,8 +75,10 @@ export default function(WrappedComponent) {
 
     resetForm(newValues) {
       this.setState({
-        form  : { ...(newValues || {}) },
-        errors: {}
+        form     : { ...(newValues || {}) },
+        touched  : {},
+        submitted: false,
+        errors   : {}
       });
     }
 
@@ -70,7 +88,8 @@ export default function(WrappedComponent) {
       return {
         name    : name,
         value   : at(this.state.form, name)[ 0 ],
-        error   : this.state.errors[ name ],
+        error   : this.hasTouched(name) && this.state.errors[ name ],
+        onFocus : this.handleFocus(name),
         onBlur  : this.validate,
         onChange: this.handleChange(name)
       };
