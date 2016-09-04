@@ -37,7 +37,7 @@ export default function(WrappedComponent) {
     handleBlur(name) {
       return () => {
         this.setState({ touched: { ...this.state.touched, [name]: true } });
-        this.validate();
+        setTimeout(() => this.validate(), 0);
       }
     }
 
