@@ -68,15 +68,11 @@ class MyFormComponent extends React.Component {
             <div>
               <input type="text" {...field(`contacts[${i}].name`)} />
               <input type="text" {...field('contacts[].phone', i)} /> { /* You can use indexes this way too */ }
-              <button type="button" onClick={() => arrayField('contacts').remove(i)}>
-                Remove
-              </button>
+              <button type="button" onClick={() => arrayField('contacts').remove(i)}>Remove</button>
             </div>
           )) 
         }
-        <button onClick={() => arrayField('contacts').push({name: 'Some Default Value'})}>
-          Add contact
-        </button
+        <button onClick={() => arrayField('contacts').push({name: 'Some Default Value'})}>Add contact</button
       </form>
     )
   }
