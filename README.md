@@ -59,7 +59,7 @@ class MyFormComponent extends React.Component {
 ```es6
 class MyFormComponent extends React.Component {
   render() {
-    const { arrayField, form } = this.props;
+    const { field, arrayField, form } = this.props;
     
     return (
       <form>
