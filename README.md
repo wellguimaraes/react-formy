@@ -80,8 +80,5 @@ class MyFormComponent extends React.Component {
       </form>
     )
   }
-
-          
-        <button type="button" onClick={() => arrayField('phones').push()}>Add phone</button>
-        <hr/>
+}
 ```
