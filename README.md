@@ -40,7 +40,8 @@ class MyFormComponent extends React.Component {
           { 
             form.phones.map((it, i) => {
               <div>
-                <input type="text" {...field(`phones[${i}]`, i)} />
+                <input type="text" {...field(`phones[${i}]`)} />
+                {/* <input type="text" {...field('phones[]', i)} /> */}
                 <button type="button" onClick={() => arrayField('phones').remove(i)}></button>
               </div>
             }) 
