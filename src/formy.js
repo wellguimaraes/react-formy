@@ -1,9 +1,10 @@
 import React, { Component } from 'react';
 import at                   from 'lodash.at';
 import set                  from 'lodash.set';
+import cloneDeep            from 'lodash.clonedeep';
 import formatFieldName      from './formatFieldName';
 
-export default function(WrappedComponent) {
+export default function(WrappedComponent, options = { errorPropName: 'data-error' }) {
 
   const validateForm = WrappedComponent.validateForm;
 
@@ -14,12 +15,48 @@ export default function(WrappedComponent) {
       this.state = { form: {}, errors: {}, touched: {} };
 
       this.field        = this.field.bind(this);
-      this.arrayField   = this.arrayField.bind(this);
       this.handleSubmit = this.handleSubmit.bind(this);
       this.validate     = this.validate.bind(this);
       this.resetForm    = this.resetForm.bind(this);
       this.handleChange = this.handleChange.bind(this);
       this.handleBlur   = this.handleBlur.bind(this);
+      this.arrayUnshift = this.arrayUnshift.bind(this);
+      this.arrayPush    = this.arrayPush.bind(this);
+      this.arrayRemove  = this.arrayRemove.bind(this);
+    }
+
+    arrayUnshift(name) {
+      return (value) => {
+        const newFormValues = { ...this.state.form };
+        const fieldArray    = at(newFormValues, name)[ 0 ] || [];
+
+        set(newFormValues, name, [ value, ...fieldArray ]);
+
+        this.setState({ form: newFormValues });
+      };
+    }
+
+    arrayPush(name) {
+      return (value) => {
+        const newFormValues = { ...this.state.form };
+        const fieldArray    = at(newFormValues, name)[ 0 ] || [];
+
+        set(newFormValues, name, [ ...fieldArray, value ]);
+
+        this.setState({ form: newFormValues });
+      };
+    }
+
+    arrayRemove(name) {
+      return (index) => {
+        const form       = this.state.form;
+        const fieldArray = at(form, name)[ 0 ];
+
+        if (fieldArray && fieldArray.length > index) {
+          fieldArray.splice(index, 1);
+          this.setState({ form: { ...form } });
+        }
+      };
     }
 
     handleChange(name) {
@@ -27,26 +64,15 @@ export default function(WrappedComponent) {
         const newValue      = e.nativeEvent ? e.nativeEvent.target.value : e;
         const newFormValues = set({ ...this.state.form }, name, newValue);
 
-        this.setState({
-          form   : newFormValues,
-          touched: { ...this.state.touched, [name]: true }
-        });
+        this.setState({ form: newFormValues });
       };
     }
 
     handleBlur(name) {
       return () => {
-        this.setState({ touched: { ...this.state.touched, [name]: true } });
         setTimeout(() => this.validate(), 0);
+        setTimeout(() => this.setState({ touched: { ...this.state.touched, [name]: true } }), 100);
       }
-    }
-
-    handleSubmit(handler) {
-      return (e) => {
-        e.preventDefault();
-        this.setState({ submitted: true });
-        this.validate().then(() => handler && handler(this.state.form))
-      };
     }
 
     hasTouched(fieldName) {
@@ -73,6 +99,14 @@ export default function(WrappedComponent) {
       });
     }
 
+    handleSubmit(handler) {
+      return (e) => {
+        e.preventDefault();
+        this.setState({ submitted: true });
+        this.validate().then(() => handler && handler(cloneDeep(this.state.form)))
+      };
+    }
+
     resetForm(newValues) {
       this.setState({
         form     : { ...(newValues || {}) },
@@ -85,64 +119,40 @@ export default function(WrappedComponent) {
     field(name) {
       name = formatFieldName(name, arguments);
 
-      return {
-        name    : name,
-        value   : at(this.state.form, name)[ 0 ],
-        error   : this.hasTouched(name) && this.state.errors[ name ],
-        onBlur  : this.handleBlur(name),
-        onChange: this.handleChange(name)
+      const errorProp = options.errorPropName;
+      const field     = {
+        name       : name,
+        onBlur     : this.handleBlur(name),
+        onChange   : this.handleChange(name),
+        [errorProp]: this.hasTouched(name) && this.state.errors[ name ]
       };
-    }
 
-    arrayField(name) {
-      name = formatFieldName(name, arguments);
+      Object.defineProperty(field, 'value', {
+        enumerable: true,
+        get       : () => at(this.state.form, name)[ 0 ] || '',
+        set       : this.handleChange(name)
+      });
 
-      return {
+      const fieldValue = at(this.state.form, name)[ 0 ];
 
-        unshift: (value) => {
-          const newFormValues = { ...this.state.form };
-          const fieldArray    = at(newFormValues, name)[ 0 ] || [];
+      if (fieldValue == undefined || fieldValue == null || Array.isArray(fieldValue)) {
+        Object.defineProperty(field, 'unshift', { value: this.arrayUnshift(name) });
+        Object.defineProperty(field, 'push', { value: this.arrayPush(name) });
+        Object.defineProperty(field, 'remove', { value: this.arrayRemove(name) });
+      }
 
-          set(newFormValues, name, [ value, ...fieldArray ]);
-
-          this.setState({ form: newFormValues });
-        },
-
-        push: (value) => {
-          const newFormValues = { ...this.state.form };
-          const fieldArray    = at(newFormValues, name)[ 0 ] || [];
-
-          set(newFormValues, name, [ ...fieldArray, value ]);
-
-          this.setState({ form: newFormValues });
-        },
-
-        remove: (index) => {
-          const form       = this.state.form;
-          const fieldArray = at(form, name)[ 0 ];
-
-          if (fieldArray && fieldArray.length > index) {
-            fieldArray.splice(index, 1);
-            this.setState({ form: { ...form } });
-          }
-        }
-
-      };
+      return field;
     }
 
     render() {
-
       const props = {
         ...this.props,
         handleSubmit: this.handleSubmit,
-        field       : this.field,
-        arrayField  : this.arrayField,
         resetForm   : this.resetForm,
-        form        : this.state.form
+        field       : this.field
       };
 
       return <WrappedComponent {...props}/>
-
     }
 
   }
