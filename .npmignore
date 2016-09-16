@@ -1,3 +1,5 @@
 .babelrc
-.idea
 .npmignore
+.idea/
+src/
+demo/
