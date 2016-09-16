@@ -1,10 +1,11 @@
 {
   "name": "react-formy",
-  "version": "1.0.14",
+  "version": "1.1.0",
   "description": "A light, simple and fast Higher Order Component to keep form state, inspired by redux-form",
   "main": "./lib/formy.js",
   "scripts": {
-    "build": "babel src --out-dir lib"
+    "build": "babel src --out-dir lib",
+    "demo": "node ./node_modules/webpack-dev-server/bin/webpack-dev-server.js"
   },
   "repository": {
     "type": "git",
@@ -23,12 +24,35 @@
   "homepage": "https://github.com/wellguimaraes/react-formy#readme",
   "dependencies": {
     "lodash.at": "^4.6.0",
+    "lodash.clonedeep": "^4.5.0",
     "lodash.set": "^4.3.2"
   },
   "devDependencies": {
     "babel-preset-es2015": "^6.14.0",
     "babel-preset-react": "^6.11.1",
     "babel-preset-stage-2": "^6.13.0",
-    "react": "^15.3.1"
+    "react": "^15.3.1",
+    "axios": "^0.14.0",
+    "babel": "^6.5.2",
+    "babel-cli": "^6.14.0",
+    "babel-core": "^6.14.0",
+    "babel-loader": "^6.2.5",
+    "babel-plugin-syntax-function-bind": "^6.13.0",
+    "babel-preset-stage-1": "^6.13.0",
+    "css-loader": "^0.24.0",
+    "node-sass": "^3.8.0",
+    "plop": "^1.5.0",
+    "react-addons-test-utils": "^15.3.1",
+    "react-dom": "^15.3.1",
+    "react-motion": "^0.4.4",
+    "react-redux": "^4.4.5",
+    "react-router": "^2.7.0",
+    "react-router-redux": "^4.0.5",
+    "sass-loader": "^4.0.0",
+    "style-loader": "^0.13.1",
+    "validate.js": "^0.10.0",
+    "webpack": "^1.13.2",
+    "webpack-dev-server": "^1.15.0",
+    "react-formy": "^1.0.15"
   }
 }
