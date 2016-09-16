@@ -1,5 +1,5 @@
 # React Formy
-A light, simple and fast Higher Order Component to keep form state, inspired by redux-form.
+A light, simple and fast higher order component to keep form state. Inspired by redux-form but with a much simpler usage.
 
 ## Install it
 `npm install react-formy --save`
