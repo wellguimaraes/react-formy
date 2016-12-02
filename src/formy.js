@@ -116,7 +116,7 @@ export default function(WrappedComponent, options = { errorPropName: 'data-error
       });
     }
 
-    field(name) {
+    field(name, defaultValue = '') {
       name = formatFieldName(name, arguments);
 
       const errorProp = options.errorPropName;
@@ -129,7 +129,7 @@ export default function(WrappedComponent, options = { errorPropName: 'data-error
 
       Object.defineProperty(field, 'value', {
         enumerable: true,
-        get       : () => at(this.state.form, name)[ 0 ] || '',
+        get       : () => at(this.state.form, name)[ 0 ] || defaultValue,
         set       : this.handleChange(name)
       });
 
