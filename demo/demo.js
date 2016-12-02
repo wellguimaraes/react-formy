@@ -23,7 +23,7 @@ class Demo extends Component {
 
         <div>
           <input type="text" placeholder="name" {...field('user.name')}/>
-          <button type="button" onClick={() => field('user.name').value = 'Well'}>Set name</button>
+          <button type="button" onClick={() => field('user.name').value = 'John Doe'}>Set name</button>
         </div>
 
         <div>
