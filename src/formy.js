@@ -129,8 +129,13 @@ export default function(WrappedComponent, options = { errorPropName: 'data-error
 
       Object.defineProperty(field, 'value', {
         enumerable: true,
-        get       : () => at(this.state.form, name)[ 0 ] || defaultValue,
-        set       : this.handleChange(name)
+        set       : this.handleChange(name),
+        get       : () => {
+          const value = at(this.state.form, name)[ 0 ];
+          return value == undefined || value == null
+            ? defaultValue
+            : value;
+        }
       });
 
       const fieldValue = at(this.state.form, name)[ 0 ];
@@ -152,7 +157,7 @@ export default function(WrappedComponent, options = { errorPropName: 'data-error
         field       : this.field
       };
 
-      return <WrappedComponent {...props}/>
+      return <WrappedComponent {...props} />
     }
 
   }
