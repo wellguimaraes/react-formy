@@ -61,7 +61,7 @@ export default function(WrappedComponent, options = { errorPropName: 'data-error
 
     handleChange(name) {
       return (e) => {
-        const newValue      = e.nativeEvent ? e.nativeEvent.target.value : e;
+        const newValue      = e.target ? e.target.value : e;
         const newFormValues = set({ ...this.state.form }, name, newValue);
 
         this.setState({ form: newFormValues });
