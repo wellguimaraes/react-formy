@@ -70,8 +70,14 @@ export default function(WrappedComponent, options = { errorPropName: 'data-error
 
     handleBlur(name) {
       return () => {
-        setTimeout(() => this.validate(), 0);
-        setTimeout(() => this.setState({ touched: { ...this.state.touched, [name]: true } }), 100);
+        let updateTouchState = () => this.setState({
+          touched: {
+            ...this.state.touched,
+            [name]: true
+          }
+        });
+
+        this.validate().then(updateTouchState, updateTouchState);
       }
     }
 
@@ -80,13 +86,16 @@ export default function(WrappedComponent, options = { errorPropName: 'data-error
     }
 
     validate() {
-      return new Promise((resolve) => {
-        if (!validateForm) return resolve();
+      return new Promise((resolve, reject) => {
+        if (!validateForm) {
+          return resolve();
+        }
 
         let isValid = validateForm(this.state.form);
 
-        if (!(isValid instanceof Promise))
+        if (!(isValid instanceof Promise)) {
           isValid = Promise.resolve(isValid);
+        }
 
         isValid.then((result) => {
           if (!result || !Object.keys(result).length) {
@@ -94,6 +103,7 @@ export default function(WrappedComponent, options = { errorPropName: 'data-error
             return resolve();
           }
 
+          reject({ errors: result });
           this.setState({ errors: result });
         });
       });
@@ -132,7 +142,7 @@ export default function(WrappedComponent, options = { errorPropName: 'data-error
         set       : this.handleChange(name),
         get       : () => {
           const value = at(this.state.form, name)[ 0 ];
-          return value == undefined || value == null
+          return value === undefined || value === null
             ? defaultValue
             : value;
         }
@@ -140,7 +150,7 @@ export default function(WrappedComponent, options = { errorPropName: 'data-error
 
       const fieldValue = at(this.state.form, name)[ 0 ];
 
-      if (fieldValue == undefined || fieldValue == null || Array.isArray(fieldValue)) {
+      if (fieldValue === undefined || fieldValue === null || Array.isArray(fieldValue)) {
         Object.defineProperty(field, 'unshift', { value: this.arrayUnshift(name) });
         Object.defineProperty(field, 'push', { value: this.arrayPush(name) });
         Object.defineProperty(field, 'remove', { value: this.arrayRemove(name) });
