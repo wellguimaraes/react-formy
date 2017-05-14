@@ -85,13 +85,13 @@ export default function(WrappedComponent, options = { errorPropName: 'data-error
       return this.state.submitted || this.state.touched.hasOwnProperty(fieldName);
     }
 
-    validate() {
+    validate({ isSubmitting = false } = {}) {
       return new Promise((resolve, reject) => {
         if (!validateForm) {
           return resolve();
         }
 
-        let isValid = validateForm(this.state.form);
+        let isValid = validateForm(this.state.form, { isSubmitting });
 
         if (!(isValid instanceof Promise)) {
           isValid = Promise.resolve(isValid);
@@ -113,7 +113,7 @@ export default function(WrappedComponent, options = { errorPropName: 'data-error
       return (e) => {
         e.preventDefault();
         this.setState({ submitted: true });
-        this.validate().then(() => handler && handler(cloneDeep(this.state.form)))
+        this.validate({ isSubmitting: true }).then(() => handler && handler(cloneDeep(this.state.form)))
       };
     }
 
