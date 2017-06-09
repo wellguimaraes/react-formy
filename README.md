@@ -1,5 +1,5 @@
 # React Formy
-A light, simple and fast higher order component to keep form state. Inspired by redux-form but with a much simpler usage.
+A light, simple and fast higher order component to keep form state.
 
 ## Install it
 `npm install react-formy --save`
@@ -8,9 +8,11 @@ A light, simple and fast higher order component to keep form state. Inspired by 
 
 Simple usage
 
-```es6
+```js
+import React from 'react';
 import formy from 'react-formy';
 
+@formy()
 class MyFormComponent extends React.Component {
   render() {
     const { handleSubmit, field } = this.props;
@@ -25,34 +27,38 @@ class MyFormComponent extends React.Component {
   }
 }
 
-export default formy(MyFormComponent);
+export default MyFormComponent;
 ```
 
 ### Add some validation
-```es6
-class MyFormComponent extends React.Component {
+```js
+import React from 'react';
+import formy, { setErrorPropName } from 'react-formy';
+import validate from 'validate.js';
 
- static validateForm(form) {
-    const errors = {};
-  
-    if (!form.user || form.user.phone)
-      errors['user.phone'] = 'Phone is required';
-    
-    if (!form.address)
-      errors['address'] = 'Address is required';
-      
-    // We could use some validation lib like validate.js
-      
-    return errors;
-  }
+setErrorPropName('errorMessage'); // "errorText" is the default error prop name
+
+function validateForm(values) {
+  return validate(values, {
+    'user.phone': { presence: true, format: /^\(\d+2)\ \d{5}-\d{4}/ },
+    'user.address': { presence: true }
+  });
+}
+
+@formy(validateForm)
+class MyFormComponent extends React.Component {
   
   // ...
-  
+      
 }
 ```
 
 ### Array fields
-```es6
+```js
+import React from 'react';
+import formy from 'react-formy';
+
+@formy()
 class MyFormComponent extends React.Component {
   render() {
     const { field } = this.props;
@@ -69,7 +75,7 @@ class MyFormComponent extends React.Component {
             </div>
           )) 
         }
-        <button onClick={() => field('contacts').push({ name: 'Some Default Value' })}>Add contact</button
+        <button onClick={() => field('contacts').push({ name: 'Some Default Value' })}>Add contact</button>
       </form>
     )
   }
@@ -77,7 +83,7 @@ class MyFormComponent extends React.Component {
 ```
 
 ### Reset/Preset form
-```es6
+```js
 const { resetForm } = this.props;
 
 resetForm(); // Reset form
@@ -85,7 +91,7 @@ resetForm({ user: { name: 'John Doe' } }); // Reset form with user.name preset v
 ```
 
 ### Set a field value programmatically
-```es6
+```js
 const { field } = this.props;
 
 field('some.deep[1].field').value = 'newValue';

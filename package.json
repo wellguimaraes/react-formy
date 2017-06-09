@@ -1,7 +1,7 @@
 {
   "name": "react-formy",
-  "version": "1.5.0",
-  "description": "A light, simple and fast Higher Order Component to keep form state, inspired by redux-form",
+  "version": "2.0.0",
+  "description": "A light, simple and fast Higher Order Component to keep form state",
   "main": "./lib/formy.js",
   "scripts": {
     "build": "babel src --out-dir lib",
@@ -26,6 +26,9 @@
     "lodash.at": "^4.6.0",
     "lodash.clonedeep": "^4.5.0",
     "lodash.set": "^4.3.2"
+  },
+  "peerDependencies": {
+    "prop-types": "latest"
   },
   "devDependencies": {
     "babel-preset-es2015": "^6.14.0",

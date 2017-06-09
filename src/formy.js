@@ -1,13 +1,34 @@
 import React, { Component } from 'react';
-import at                   from 'lodash.at';
-import set                  from 'lodash.set';
-import cloneDeep            from 'lodash.clonedeep';
-import formatFieldName      from './formatFieldName';
+import PropTypes from 'prop-types';
+import at from 'lodash.at';
+import set from 'lodash.set';
+import cloneDeep from 'lodash.clonedeep';
+import formatFieldName from './formatFieldName';
 
-export default function(WrappedComponent, options = { errorPropName: 'data-error' }) {
+const options = { errorPropName: 'errorText' };
 
-  const validateForm = WrappedComponent.validateForm;
+export function setErrorPropName(name) {
+  options.errorPropName = name;
+}
 
+export const formyPropTypes = {
+  resetForm   : PropTypes.func,
+  handleSubmit: PropTypes.func,
+  field       : PropTypes.func,
+};
+
+export const formyDefaultProps = {
+  handleSubmit: (fn) => { fn && fn() },
+  resetForm   : () => {},
+  field       : () => ({
+    value  : '',
+    unshift: () => {},
+    push   : () => {},
+    remove : () => {},
+  }),
+};
+
+export default (validateForm) => (WrappedComponent) => {
   return class extends Component {
     constructor(props) {
       super(props);
@@ -73,8 +94,8 @@ export default function(WrappedComponent, options = { errorPropName: 'data-error
         let updateTouchState = () => this.setState({
           touched: {
             ...this.state.touched,
-            [name]: true
-          }
+            [name]: true,
+          },
         });
 
         this.validate().then(updateTouchState, updateTouchState);
@@ -122,7 +143,7 @@ export default function(WrappedComponent, options = { errorPropName: 'data-error
         form     : { ...(newValues || {}) },
         touched  : {},
         submitted: false,
-        errors   : {}
+        errors   : {},
       });
     }
 
@@ -134,7 +155,7 @@ export default function(WrappedComponent, options = { errorPropName: 'data-error
         name       : name,
         onBlur     : this.handleBlur(name),
         onChange   : this.handleChange(name),
-        [errorProp]: this.hasTouched(name) && this.state.errors[ name ]
+        [errorProp]: this.hasTouched(name) && this.state.errors[ name ],
       };
 
       Object.defineProperty(field, 'value', {
@@ -145,7 +166,7 @@ export default function(WrappedComponent, options = { errorPropName: 'data-error
           return value === undefined || value === null
             ? defaultValue
             : value;
-        }
+        },
       });
 
       const fieldValue = at(this.state.form, name)[ 0 ];
@@ -164,12 +185,11 @@ export default function(WrappedComponent, options = { errorPropName: 'data-error
         ...this.props,
         handleSubmit: this.handleSubmit,
         resetForm   : this.resetForm,
-        field       : this.field
+        field       : this.field,
       };
 
       return <WrappedComponent {...props} />
     }
 
   }
-
 }
