@@ -70,7 +70,6 @@ class MyFormComponent extends React.Component {
           contacts.map((it, i) => (
             <div>
               <input type="text" {...field(`contacts[${i}].name`)} />
-              <input type="text" {...field('contacts[].phone', i)} /> { /* You can use indexes this way too */ }
               <button type="button" onClick={ () => field('contacts').remove(i) }>Remove</button>
             </div>
           )) 
@@ -100,7 +99,7 @@ field('some.deep[1].field').value = 'newValue';
 ## License
 MIT License
 
-Copyright (c) 2016 Wellington Guimaraes
+Copyright (c) 2017 Wellington Guimaraes
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
