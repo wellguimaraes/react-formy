@@ -12,19 +12,19 @@ export function setErrorPropName(name) {
 }
 
 export const formyPropTypes = {
-  resetForm: PropTypes.func,
+  resetForm   : PropTypes.func,
   handleSubmit: PropTypes.func,
-  field: PropTypes.func
+  field       : PropTypes.func
 }
 
 export const formyDefaultProps = {
   handleSubmit: (fn) => { fn && fn() },
-  resetForm: () => {},
-  field: () => ({
-    value: '',
+  resetForm   : () => {},
+  field       : () => ({
+    value  : '',
     unshift: () => {},
-    push: () => {},
-    remove: () => {}
+    push   : () => {},
+    remove : () => {}
   })
 }
 
@@ -35,21 +35,21 @@ const formy = (validateForm) => (WrappedComponent) => {
 
       this.state = { form: {}, errors: {}, touched: {} }
 
-      this.field = this.field.bind(this)
+      this.field        = this.field.bind(this)
       this.handleSubmit = this.handleSubmit.bind(this)
-      this.validate = this.validate.bind(this)
-      this.resetForm = this.resetForm.bind(this)
+      this.validate     = this.validate.bind(this)
+      this.resetForm    = this.resetForm.bind(this)
       this.handleChange = this.handleChange.bind(this)
-      this.handleBlur = this.handleBlur.bind(this)
+      this.handleBlur   = this.handleBlur.bind(this)
       this.arrayUnshift = this.arrayUnshift.bind(this)
-      this.arrayPush = this.arrayPush.bind(this)
-      this.arrayRemove = this.arrayRemove.bind(this)
+      this.arrayPush    = this.arrayPush.bind(this)
+      this.arrayRemove  = this.arrayRemove.bind(this)
     }
 
     arrayUnshift(name) {
       return (value) => {
         const newFormValues = { ...this.state.form }
-        const fieldArray = at(newFormValues, name)[ 0 ] || []
+        const fieldArray    = at(newFormValues, name)[ 0 ] || []
 
         set(newFormValues, name, [ value, ...fieldArray ])
 
@@ -60,7 +60,7 @@ const formy = (validateForm) => (WrappedComponent) => {
     arrayPush(name) {
       return (value) => {
         const newFormValues = { ...this.state.form }
-        const fieldArray = at(newFormValues, name)[ 0 ] || []
+        const fieldArray    = at(newFormValues, name)[ 0 ] || []
 
         set(newFormValues, name, [ ...fieldArray, value ])
 
@@ -70,7 +70,7 @@ const formy = (validateForm) => (WrappedComponent) => {
 
     arrayRemove(name) {
       return (index) => {
-        const form = this.state.form
+        const form       = this.state.form
         const fieldArray = at(form, name)[ 0 ]
 
         if (fieldArray && fieldArray.length > index) {
@@ -82,10 +82,14 @@ const formy = (validateForm) => (WrappedComponent) => {
 
     handleChange(name) {
       return (e) => {
-        const newValue = e.target ? e.target.value : e
+        const newValue      = e.target ? e.target.value : e
+        const oldFormValues = this.state.form
         const newFormValues = set({ ...this.state.form }, name, newValue)
 
-        this.setState({ form: newFormValues })
+        this.setState({ form: newFormValues }, () => {
+          if (typeof this.changeListener === 'function')
+            this.changeListener(oldFormValues, newFormValues)
+        })
       }
     }
 
@@ -140,10 +144,10 @@ const formy = (validateForm) => (WrappedComponent) => {
 
     resetForm(newValues) {
       this.setState({
-        form: { ...(newValues || {}) },
-        touched: {},
+        form     : { ...(newValues || {}) },
+        touched  : {},
         submitted: false,
-        errors: {}
+        errors   : {}
       })
     }
 
@@ -151,17 +155,17 @@ const formy = (validateForm) => (WrappedComponent) => {
       name = formatFieldName(name, arguments)
 
       const errorProp = options.errorPropName
-      const field = {
-        name: name,
-        onBlur: this.handleBlur(name),
-        onChange: this.handleChange(name),
+      const field     = {
+        name         : name,
+        onBlur       : this.handleBlur(name),
+        onChange     : this.handleChange(name),
         [ errorProp ]: this.hasTouched(name) && this.state.errors[ name ]
       }
 
       Object.defineProperty(field, 'value', {
         enumerable: true,
-        set: this.handleChange(name),
-        get: () => {
+        set       : this.handleChange(name),
+        get       : () => {
           const value = at(this.state.form, name)[ 0 ]
           return value === undefined || value === null
             ? defaultValue
@@ -180,12 +184,17 @@ const formy = (validateForm) => (WrappedComponent) => {
       return field
     }
 
+    setChangeListener(listener) {
+      this.changeListener = listener
+    }
+
     render() {
       const props = {
         ...this.props,
         handleSubmit: this.handleSubmit,
-        resetForm: this.resetForm,
-        field: this.field
+        resetForm   : this.resetForm,
+        field       : this.field,
+        onChangeForm: this.setChangeListener
       }
 
       return <WrappedComponent { ...props } />
@@ -198,7 +207,7 @@ export default formy
 
 export class Formy extends React.PureComponent {
   static propTypes = {
-    children: PropTypes.func.isRequired,
+    children    : PropTypes.func.isRequired,
     validateForm: PropTypes.func,
     handleSubmit: PropTypes.func
   }
@@ -206,12 +215,16 @@ export class Formy extends React.PureComponent {
   constructor(props) {
     super(props)
 
-    const { validateForm, children, handleSubmit, ...otherProps } = props
+    const { validateForm, children, handleSubmit, onChange, ...otherProps } = props
+
     const customSubmitHandler = handleSubmit
 
-    this.FormComponent = formy(validateForm)(({ field, handleSubmit, resetForm }) => {
-      this.reset = resetForm
-      this.field = field
+    this.FormComponent = formy(validateForm)(({ field, handleSubmit, resetForm, onChangeForm }) => {
+      this.reset    = resetForm
+      this.field    = field
+      this.onChange = onChangeForm
+
+      onChangeForm(onChange)
 
       return (
         <form onSubmit={ handleSubmit(customSubmitHandler) } { ...otherProps }>
