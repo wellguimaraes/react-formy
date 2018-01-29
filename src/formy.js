@@ -33,18 +33,23 @@ const formy = (validateForm) => (WrappedComponent) => {
     constructor(props) {
       super(props)
 
-      this.changeListener = null
-      this.state          = { form: {}, errors: {}, touched: {} }
+      this.state = {
+        form          : {},
+        errors        : {},
+        touched       : {},
+        changeListener: null
+      }
 
-      this.field        = this.field.bind(this)
-      this.handleSubmit = this.handleSubmit.bind(this)
-      this.validate     = this.validate.bind(this)
-      this.resetForm    = this.resetForm.bind(this)
-      this.handleChange = this.handleChange.bind(this)
-      this.handleBlur   = this.handleBlur.bind(this)
-      this.arrayUnshift = this.arrayUnshift.bind(this)
-      this.arrayPush    = this.arrayPush.bind(this)
-      this.arrayRemove  = this.arrayRemove.bind(this)
+      this.field             = this.field.bind(this)
+      this.handleSubmit      = this.handleSubmit.bind(this)
+      this.validate          = this.validate.bind(this)
+      this.resetForm         = this.resetForm.bind(this)
+      this.handleChange      = this.handleChange.bind(this)
+      this.handleBlur        = this.handleBlur.bind(this)
+      this.arrayUnshift      = this.arrayUnshift.bind(this)
+      this.arrayPush         = this.arrayPush.bind(this)
+      this.arrayRemove       = this.arrayRemove.bind(this)
+      this.setChangeListener = this.setChangeListener.bind(this)
     }
 
     arrayUnshift(name) {
@@ -88,8 +93,8 @@ const formy = (validateForm) => (WrappedComponent) => {
         const newFormValues = set({ ...this.state.form }, name, newValue)
 
         this.setState({ form: newFormValues }, () => {
-          if (typeof this.changeListener === 'function')
-            this.changeListener(oldFormValues, newFormValues)
+          if (typeof this.state.changeListener === 'function')
+            this.state.changeListener(oldFormValues, newFormValues)
         })
       }
     }
@@ -186,7 +191,7 @@ const formy = (validateForm) => (WrappedComponent) => {
     }
 
     setChangeListener(listener) {
-      this.changeListener = listener
+      this.setState({ changeListener: listener })
     }
 
     render() {
