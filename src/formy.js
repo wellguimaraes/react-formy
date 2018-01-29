@@ -33,7 +33,8 @@ const formy = (validateForm) => (WrappedComponent) => {
     constructor(props) {
       super(props)
 
-      this.state = { form: {}, errors: {}, touched: {} }
+      this.changeListener = null
+      this.state          = { form: {}, errors: {}, touched: {} }
 
       this.field        = this.field.bind(this)
       this.handleSubmit = this.handleSubmit.bind(this)
