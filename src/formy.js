@@ -14,12 +14,14 @@ export function setErrorPropName(name) {
 export const formyPropTypes = {
   resetForm   : PropTypes.func,
   handleSubmit: PropTypes.func,
-  field       : PropTypes.func
+  field       : PropTypes.func,
+  onChangeForm: PropTypes.func
 }
 
 export const formyDefaultProps = {
   handleSubmit: (fn) => { fn && fn() },
   resetForm   : () => {},
+  onChangeForm: () => {},
   field       : () => ({
     value  : '',
     unshift: () => {},
@@ -33,11 +35,12 @@ const formy = (validateForm) => (WrappedComponent) => {
     constructor(props) {
       super(props)
 
-      this.state = {
-        form          : {},
-        errors        : {},
-        touched       : {},
-        changeListener: null
+      this.changeListener = null
+      this.state          = {
+        form        : {},
+        errors      : {},
+        touched     : {},
+        stateVersion: 0
       }
 
       this.field             = this.field.bind(this)
@@ -59,7 +62,10 @@ const formy = (validateForm) => (WrappedComponent) => {
 
         set(newFormValues, name, [ value, ...fieldArray ])
 
-        this.setState({ form: newFormValues })
+        this.setState({
+          form        : newFormValues,
+          stateVersion: this.state.stateVersion + 1
+        })
       }
     }
 
@@ -70,7 +76,10 @@ const formy = (validateForm) => (WrappedComponent) => {
 
         set(newFormValues, name, [ ...fieldArray, value ])
 
-        this.setState({ form: newFormValues })
+        this.setState({
+          form        : newFormValues,
+          stateVersion: this.state.stateVersion + 1
+        })
       }
     }
 
@@ -81,7 +90,10 @@ const formy = (validateForm) => (WrappedComponent) => {
 
         if (fieldArray && fieldArray.length > index) {
           fieldArray.splice(index, 1)
-          this.setState({ form: { ...form } })
+          this.setState({
+            form        : { ...form },
+            stateVersion: this.state.stateVersion + 1
+          })
         }
       }
     }
@@ -92,9 +104,12 @@ const formy = (validateForm) => (WrappedComponent) => {
         const oldFormValues = this.state.form
         const newFormValues = set({ ...this.state.form }, name, newValue)
 
-        this.setState({ form: newFormValues }, () => {
-          if (typeof this.state.changeListener === 'function')
-            this.state.changeListener(oldFormValues, newFormValues)
+        this.setState({
+          form        : newFormValues,
+          stateVersion: this.state.stateVersion + 1
+        }, () => {
+          if (typeof this.changeListener === 'function')
+            this.changeListener(oldFormValues, newFormValues)
         })
       }
     }
@@ -130,12 +145,18 @@ const formy = (validateForm) => (WrappedComponent) => {
 
         isValid.then((result) => {
           if (!result || !Object.keys(result).length) {
-            this.setState({ errors: {} })
+            this.setState({
+              errors      : {},
+              stateVersion: this.state.stateVersion + 1
+            })
             return resolve()
           }
 
           reject({ errors: result })
-          this.setState({ errors: result })
+          this.setState({
+            errors      : result,
+            stateVersion: this.state.stateVersion + 1
+          })
         })
       })
     }
@@ -143,17 +164,21 @@ const formy = (validateForm) => (WrappedComponent) => {
     handleSubmit(handler) {
       return (e) => {
         e.preventDefault()
-        this.setState({ submitted: true })
+        this.setState({
+          submitted   : true,
+          stateVersion: this.state.stateVersion + 1
+        })
         this.validate({ isSubmitting: true }).then(() => handler && handler(cloneDeep(this.state.form)))
       }
     }
 
     resetForm(newValues) {
       this.setState({
-        form     : { ...(newValues || {}) },
-        touched  : {},
-        submitted: false,
-        errors   : {}
+        form        : { ...(newValues || {}) },
+        touched     : {},
+        submitted   : false,
+        errors      : {},
+        stateVersion: 0
       })
     }
 
@@ -191,7 +216,7 @@ const formy = (validateForm) => (WrappedComponent) => {
     }
 
     setChangeListener(listener) {
-      this.setState({ changeListener: listener })
+      this.changeListener = listener
     }
 
     render() {
@@ -200,7 +225,8 @@ const formy = (validateForm) => (WrappedComponent) => {
         handleSubmit: this.handleSubmit,
         resetForm   : this.resetForm,
         field       : this.field,
-        onChangeForm: this.setChangeListener
+        onChangeForm: this.setChangeListener,
+        stateVersion: this.state.stateVersion
       }
 
       return <WrappedComponent { ...props } />
