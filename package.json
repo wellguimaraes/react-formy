@@ -5,7 +5,8 @@
   "main": "./lib/formy.js",
   "scripts": {
     "build": "babel src --out-dir lib",
-    "demo": "node ./node_modules/webpack-dev-server/bin/webpack-dev-server.js"
+    "demo": "node ./node_modules/webpack-dev-server/bin/webpack-dev-server.js",
+    "prepublish": "npm run build"
   },
   "repository": {
     "type": "git",
