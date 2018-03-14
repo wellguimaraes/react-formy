@@ -1,6 +1,6 @@
 {
   "name": "react-formy",
-  "version": "3.1.6",
+  "version": "3.1.7",
   "description": "A light, simple and fast Higher Order Component to keep form state",
   "main": "./lib/formy.js",
   "scripts": {

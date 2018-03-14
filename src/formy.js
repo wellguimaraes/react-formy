@@ -178,7 +178,7 @@ const formy = (validateForm) => (WrappedComponent) => {
         touched     : {},
         submitted   : false,
         errors      : {},
-        stateVersion: 0
+        stateVersion: this.state.stateVersion + 1
       })
     }
 
