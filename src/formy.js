@@ -19,7 +19,7 @@ export const formyPropTypes = {
 }
 
 export const formyDefaultProps = {
-  handleSubmit: (fn) => { fn && fn() },
+  handleSubmit: (fn) => (e) => fn && fn(e),
   resetForm   : () => {},
   onChangeForm: () => {},
   field       : () => ({
@@ -117,10 +117,11 @@ const formy = (validateForm) => (WrappedComponent) => {
     handleBlur(name) {
       return () => {
         let updateTouchState = () => this.setState({
-          touched: {
+          touched     : {
             ...this.state.touched,
             [ name ]: true
-          }
+          },
+          stateVersion: this.state.stateVersion + 1
         })
 
         this.validate().then(updateTouchState, updateTouchState)
@@ -164,11 +165,14 @@ const formy = (validateForm) => (WrappedComponent) => {
     handleSubmit(handler) {
       return (e) => {
         e.preventDefault()
+
         this.setState({
           submitted   : true,
           stateVersion: this.state.stateVersion + 1
         })
-        this.validate({ isSubmitting: true }).then(() => handler && handler(cloneDeep(this.state.form)))
+
+        this.validate({ isSubmitting: true })
+          .then(() => handler && handler(cloneDeep(this.state.form)))
       }
     }
 
