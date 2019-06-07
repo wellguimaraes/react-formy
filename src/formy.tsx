@@ -9,6 +9,7 @@ export interface KeyValue {
 }
 
 type Nothing = undefined | null
+
 export type FormyValidator = (values: KeyValue) => Promise<KeyValue | Nothing> | KeyValue | Nothing
 export type inlineValidator = (value: any, values: any) => Promise<string | Nothing> | string | Nothing
 
@@ -41,7 +42,7 @@ export interface FormyState {
 }
 
 export interface FormyOptions {
-  validateForm?: FormyValidator,
+  validate?: FormyValidator,
   errorPropName?: string
 }
 
@@ -51,7 +52,7 @@ export function setErrorPropName(name: string) {
   globalErrorPropName = name
 }
 
-export const formy = <T extends object>({validateForm = async () => ({}), errorPropName }: FormyOptions = {}) => (WrappedComponent: React.ComponentType<T & FormyComponent>): React.ComponentType<T & FormyComponent> => {
+export const formy = <T extends object>({validate = async () => ({}), errorPropName }: FormyOptions = {}) => (WrappedComponent: React.ComponentType<T & FormyComponent>): React.ComponentType<T & FormyComponent> => {
   return class extends React.Component<T & FormyComponent, FormyState> {
     state = {
       form: {},
@@ -128,7 +129,7 @@ export const formy = <T extends object>({validateForm = async () => ({}), errorP
     }
 
     validate = async () => {
-      if (!validateForm) {
+      if (!validate) {
         return true
       }
 
@@ -150,7 +151,7 @@ export const formy = <T extends object>({validateForm = async () => ({}), errorP
         }, {} as any)
 
       const result = {
-        ...await validateForm(this.state.form),
+        ...await validate(this.state.form),
         ...customValidationErrors,
       }
 
