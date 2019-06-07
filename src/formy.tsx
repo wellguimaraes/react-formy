@@ -8,8 +8,9 @@ export interface KeyValue {
   [k: string]: string
 }
 
-export type FormyValidator = (values: KeyValue) => Promise<KeyValue | undefined>
-export type inlineValidator = (value: any, values: any) => Promise<string | null | undefined> | string | null | undefined
+type Nothing = undefined | null
+export type FormyValidator = (values: KeyValue) => Promise<KeyValue | Nothing> | KeyValue | Nothing
+export type inlineValidator = (value: any, values: any) => Promise<string | Nothing> | string | Nothing
 
 export interface FieldOptions {
   defaultValue?: any,
@@ -18,14 +19,16 @@ export interface FieldOptions {
   validate?: inlineValidator
 }
 
+export type FormyField = (name: string, options?: FieldOptions) => {
+  onChange: any
+  onBlur: any
+  name: any
+  value: any
+  [errorKey: string]: string
+} & any
+
 export interface FormyComponent {
-  field?: (name: string, options?: FieldOptions) => {
-    onChange: any
-    onBlur: any
-    name: any
-    value: any
-    [errorKey: string]: string
-  } & any,
+  field?: FormyField,
   handleSubmit?: (fn: (values: any) => void) => (e: FormEvent) => void,
   resetForm?: (values: any) => void
 }
