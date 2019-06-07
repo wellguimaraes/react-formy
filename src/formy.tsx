@@ -43,7 +43,7 @@ export function setErrorPropName(name: string) {
   globalErrorPropName = name
 }
 
-export default <T extends object>({validateForm = async () => ({}), errorPropName }: FormyOptions = {}) => (WrappedComponent: React.ComponentType<T & FormyComponent>): React.ComponentType<T & FormyComponent> => {
+export const formy = <T extends object>({validateForm = async () => ({}), errorPropName }: FormyOptions = {}) => (WrappedComponent: React.ComponentType<T & FormyComponent>): React.ComponentType<T & FormyComponent> => {
   return class extends React.Component<T & FormyComponent, FormyState> {
     state = {
       form: {},
@@ -236,3 +236,5 @@ export default <T extends object>({validateForm = async () => ({}), errorPropNam
 
   }
 }
+
+export default formy
