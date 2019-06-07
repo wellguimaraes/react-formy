@@ -19,10 +19,15 @@ export interface FieldOptions {
 }
 
 export interface FormyComponent {
-  field?: (
-    name: string,
-    options?: { onChange?: () => void, validate?: inlineValidator }) => any,
-  handleSubmit?: any,
+  field?: (name: string, options?: FieldOptions) => {
+    onChange: any
+    onBlur: any
+    name: any
+    value: any
+    [errorKey: string]: string
+  } & any,
+  handleSubmit?: (fn: (values: any) => void) => (e: FormEvent) => void,
+  resetForm: (values: any) => void
 }
 
 export interface FormyState {
