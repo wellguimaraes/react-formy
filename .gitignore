@@ -38,3 +38,5 @@ jspm_packages
 
 .idea/
 lib/
+
+tsconfig.tsbuildinfo
