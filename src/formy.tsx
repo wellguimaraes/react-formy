@@ -27,7 +27,7 @@ export interface FormyComponent {
     [errorKey: string]: string
   } & any,
   handleSubmit?: (fn: (values: any) => void) => (e: FormEvent) => void,
-  resetForm: (values: any) => void
+  resetForm?: (values: any) => void
 }
 
 export interface FormyState {
