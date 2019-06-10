@@ -100,12 +100,15 @@ export const formy = <T extends object>({validate = async () => ({}), errorPropN
     handleChange = (name: string, afterChange?: (newValue: any) => void) => {
       return (e: any) => {
         const newValue = e.target ? e.target.value : e
-        const newFormValues = set({ ...this.state.form }, name, newValue)
-
-        this.setState({ form: newFormValues }, () => {
+        this.applyChanges(name, newValue, () => {
           afterChange && afterChange(newValue)
         })
       }
+    }
+
+    applyChanges = (name: string, newValue: any, callback?: () => void) => {
+      const newFormValues = set({ ...this.state.form }, name, newValue)
+      this.setState({ form: newFormValues }, callback)
     }
 
     handleBlur = (
@@ -196,6 +199,10 @@ export const formy = <T extends object>({validate = async () => ({}), errorPropN
         onBlur: this.handleBlur(name, onBlur),
         onChange: this.handleChange(name, onChange),
         [errorProp]: this.hasTouched(name) && (this.state.errors as any)[name],
+      }
+
+      if (defaultValue && !(this.state.touched as any)[name] && !this.state.form.hasOwnProperty(name)) {
+        this.applyChanges(name, defaultValue)
       }
 
       Object.defineProperty(field, 'value', {
