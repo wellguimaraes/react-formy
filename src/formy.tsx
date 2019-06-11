@@ -201,7 +201,7 @@ export const formy = <T extends object>({validate = async () => ({}), errorPropN
         [errorProp]: this.hasTouched(name) && (this.state.errors as any)[name],
       }
 
-      if (defaultValue && !(this.state.touched as any)[name] && !this.state.form.hasOwnProperty(name)) {
+      if (defaultValue && !this.hasTouched(name) && !this.state.form.hasOwnProperty(name)) {
         this.applyChanges(name, defaultValue)
       }
 
