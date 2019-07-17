@@ -62,6 +62,8 @@ export const formy = <T extends object>({validate = async () => ({}), errorPropN
     }
 
     inlineValidators = {} as any
+    newFormValues = {} as any
+    setNewFormValuesTimeout = 0
 
     arrayUnshift = (name: string) => {
       return (value: string) => {
@@ -107,8 +109,15 @@ export const formy = <T extends object>({validate = async () => ({}), errorPropN
     }
 
     applyChanges = (name: string, newValue: any, callback?: () => void) => {
-      const newFormValues = set({ ...this.state.form }, name, newValue)
-      this.setState({ form: newFormValues }, callback)
+      this.newFormValues = set({ ...this.newFormValues }, name, newValue)
+
+      clearTimeout(this.setNewFormValuesTimeout)
+
+      this.setNewFormValuesTimeout = setTimeout(() => {
+        const newFormValues = set({ ...this.state.form, ...this.newFormValues }, name, newValue)
+        this.setState({ form: newFormValues }, callback)
+        this.newFormValues = {}
+      })
     }
 
     handleBlur = (
@@ -201,13 +210,21 @@ export const formy = <T extends object>({validate = async () => ({}), errorPropN
         [errorProp]: this.hasTouched(name) && (this.state.errors as any)[name],
       }
 
-      if (defaultValue && !this.hasTouched(name) && !this.state.form.hasOwnProperty(name)) {
+      if (defaultValue && !this.hasTouched(name) && ((this.state.form as any)[name] !== defaultValue)) {
         this.applyChanges(name, defaultValue)
       }
 
       Object.defineProperty(field, 'value', {
         enumerable: true,
-        set: this.handleChange(name),
+        set: (v) => {
+          this.setState({
+            touched: {
+              ...this.state.touched,
+              [name]: true,
+            },
+          })
+          this.handleChange(name)(v)
+        },
         get: () => {
           const value = at(this.state.form, name)[0]
           return value === undefined || value === null
