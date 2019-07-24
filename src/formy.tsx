@@ -123,8 +123,6 @@ export const formy = <T extends object>({
     }
 
     applyChanges = (name: string, newValue: any, callback?: () => void) => {
-      console.log('Changing value', name, newValue, this.state.touched)
-
       const newFormValues = set({ ...this.state.form }, name, newValue)
       this.setState({ form: newFormValues }, callback)
     }
@@ -256,7 +254,6 @@ export const formy = <T extends object>({
         (this.state.form as any)[name] !== defaultValue &&
         !(this.newFormValues || {}).hasOwnProperty(name)
       ) {
-        console.log('Set default value', name, this.state.touched)
         this.applyChanges(name, defaultValue)
       }
 
