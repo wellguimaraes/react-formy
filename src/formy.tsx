@@ -5,54 +5,55 @@ import * as React from 'react'
 import { FormEvent } from 'react'
 
 export interface KeyValue {
-  [k: string]: string;
+  [k: string]: string
 }
 
-type Nothing = undefined | null;
+type Nothing = undefined | null
 
 export type FormyValidator = (
-  values: KeyValue,
-) => Promise<KeyValue | Nothing> | KeyValue | Nothing;
+  values: KeyValue
+) => Promise<KeyValue | Nothing> | KeyValue | Nothing
 export type inlineValidator = (
   value: any,
-  values: any,
-) => Promise<string | Nothing> | string | Nothing;
+  values: any
+) => Promise<string | Nothing> | string | Nothing
 
 export interface FieldOptions {
-  defaultValue?: any;
-  onChange?: (newValue: any) => void;
-  onBlur?: (e: FocusEvent) => void;
-  onFocus?: (e: FocusEvent) => void;
-  validate?: inlineValidator;
+  defaultValue?: any
+  onChange?: (newValue: any) => void
+  onBlur?: (e: FocusEvent) => void
+  onFocus?: (e: FocusEvent) => void
+  validate?: inlineValidator
 }
 
 export type FormyField = (
   name: string,
-  options?: FieldOptions,
+  options?: FieldOptions
 ) => {
-  onChange: any;
-  onBlur: any;
-  name: any;
-  value: any;
-  [errorKey: string]: string;
-} & any;
+  onChange: any
+  onBlur: any
+  name: any
+  value: any
+  [errorKey: string]: string
+} & any
 
 export interface FormyComponent {
-  field?: FormyField;
-  handleSubmit?: (fn: (values: any) => void) => (e: FormEvent) => void;
-  resetForm?: (values?: any) => void;
+  field?: FormyField
+  handleSubmit?: (fn: (values: any) => void) => (e: FormEvent) => void
+  resetForm?: (values?: any) => void
 }
 
 export interface FormyState {
-  form: KeyValue;
-  errors: KeyValue;
-  touched: KeyValue;
-  submitted: boolean;
+  form: KeyValue
+  errors: KeyValue
+  touched: KeyValue
+  submitted: boolean
+  defaultValues: KeyValue
 }
 
 export interface FormyOptions {
-  validate?: FormyValidator;
-  errorPropName?: string;
+  validate?: FormyValidator
+  errorPropName?: string
 }
 
 let globalErrorPropName = 'errorText'
@@ -62,17 +63,18 @@ export function setErrorPropName(name: string) {
 }
 
 export const formy = <T extends object>({
-                                          validate = async () => ({}),
-                                          errorPropName,
-                                        }: FormyOptions = {}) => (
-  WrappedComponent: React.ComponentType<T & FormyComponent>,
+  validate = async () => ({}),
+  errorPropName
+}: FormyOptions = {}) => (
+  WrappedComponent: React.ComponentType<T & FormyComponent>
 ): React.ComponentType<T & FormyComponent> => {
   return class extends React.Component<T & FormyComponent, FormyState> {
     state = {
       form: {},
+      defaultValues: {},
       errors: {},
       touched: {},
-      submitted: false,
+      submitted: false
     }
 
     inlineValidators = {} as any
@@ -136,14 +138,14 @@ export const formy = <T extends object>({
         const newFormValues = set(
           { ...this.state.form, ...this.newFormValues },
           name,
-          newValue,
+          newValue
         )
         this.setState({
           form: newFormValues,
           touched: {
             ...this.state.touched,
-            [name]: true,
-          },
+            [name]: true
+          }
         })
         this.newFormValues = {}
       })
@@ -162,10 +164,10 @@ export const formy = <T extends object>({
           {
             touched: {
               ...this.state.touched,
-              [name]: true,
-            },
+              [name]: true
+            }
           },
-          () => afterFocus && afterFocus(e),
+          () => afterFocus && afterFocus(e)
         )
       }
     }
@@ -187,7 +189,7 @@ export const formy = <T extends object>({
 
           return {
             key,
-            validationResult,
+            validationResult
           }
         })
         .filter(it => it.validationResult)
@@ -196,12 +198,12 @@ export const formy = <T extends object>({
             prev[curr.key] = curr.validationResult
             return prev
           },
-          {} as any,
+          {} as any
         )
 
       const result = {
         ...(await validate(this.state.form)),
-        ...customValidationErrors,
+        ...customValidationErrors
       }
 
       if (!result || !Object.keys(result).length) {
@@ -228,12 +230,18 @@ export const formy = <T extends object>({
         form: { ...(newValues || {}) },
         touched: {},
         submitted: false,
-        errors: {},
+        errors: {}
       })
     }
 
     field = (name: string, fieldOptions: FieldOptions = {}) => {
-      const { defaultValue = '', onChange, onBlur, onFocus, validate } = fieldOptions
+      const {
+        defaultValue = '',
+        onChange,
+        onBlur,
+        onFocus,
+        validate
+      } = fieldOptions
       const errorProp = errorPropName || globalErrorPropName
 
       if (validate) {
@@ -245,16 +253,19 @@ export const formy = <T extends object>({
         onFocus: this.handleFocus(name, onFocus),
         onBlur: this.handleBlur(onBlur),
         onChange: this.handleChange(name, onChange),
-        [errorProp]: this.hasTouched(name) && (this.state.errors as any)[name],
+        [errorProp]: this.hasTouched(name) && (this.state.errors as any)[name]
       }
 
       if (
         defaultValue &&
         !this.hasTouched(name) &&
-        (this.state.form as any)[name] !== defaultValue &&
-        !(this.newFormValues || {}).hasOwnProperty(name)
+        (this.state.defaultValues as any)[name] !== defaultValue
       ) {
-        this.asyncSetValue(name, defaultValue)
+        const newFormValues = set({ ...this.state.form }, name, defaultValue)
+        this.setState({
+          form: newFormValues,
+          defaultValues: { ...this.state.defaultValues, [name]: defaultValue }
+        })
       }
 
       Object.defineProperty(field, 'value', {
@@ -263,15 +274,15 @@ export const formy = <T extends object>({
           this.setState({
             touched: {
               ...this.state.touched,
-              [name]: true,
-            },
+              [name]: true
+            }
           })
           this.asyncSetValue(name, v)
         },
         get: () => {
           const value = at(this.state.form, name)[0]
           return value === undefined || value === null ? defaultValue : value
-        },
+        }
       })
 
       const fieldValue = at(this.state.form, name)[0]
@@ -282,15 +293,15 @@ export const formy = <T extends object>({
         Array.isArray(fieldValue)
       ) {
         Object.defineProperty(field, 'unshift', {
-          value: this.arrayUnshift(name),
+          value: this.arrayUnshift(name)
         })
 
         Object.defineProperty(field, 'push', {
-          value: this.arrayPush(name),
+          value: this.arrayPush(name)
         })
 
         Object.defineProperty(field, 'remove', {
-          value: this.arrayRemove(name),
+          value: this.arrayRemove(name)
         })
       }
 
@@ -302,7 +313,7 @@ export const formy = <T extends object>({
         ...this.props,
         handleSubmit: this.handleSubmit,
         resetForm: this.resetForm,
-        field: this.field,
+        field: this.field
       }
 
       return <WrappedComponent {...props} />
