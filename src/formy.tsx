@@ -127,7 +127,7 @@ export const formy = <T extends object>({
       this.setState({ form: newFormValues }, callback)
     }
 
-    programmaticallySet = (name: string, newValue: any) => {
+    asyncSetValue = (name: string, newValue: any) => {
       this.newFormValues = set({ ...this.newFormValues }, name, newValue)
 
       clearTimeout(this.setNewFormValuesTimeout)
@@ -254,7 +254,7 @@ export const formy = <T extends object>({
         (this.state.form as any)[name] !== defaultValue &&
         !(this.newFormValues || {}).hasOwnProperty(name)
       ) {
-        this.applyChanges(name, defaultValue)
+        this.asyncSetValue(name, defaultValue)
       }
 
       Object.defineProperty(field, 'value', {
@@ -266,7 +266,7 @@ export const formy = <T extends object>({
               [name]: true,
             },
           })
-          this.programmaticallySet(name, v)
+          this.asyncSetValue(name, v)
         },
         get: () => {
           const value = at(this.state.form, name)[0]
