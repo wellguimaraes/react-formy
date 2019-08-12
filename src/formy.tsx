@@ -41,6 +41,7 @@ export interface FormyComponent {
   field?: FormyField
   handleSubmit?: (fn: (values: any) => void) => (e: FormEvent) => void
   resetForm?: (values?: any) => void
+  formValues?: { get(): KeyValue }
 }
 
 export interface FormyState {
@@ -63,9 +64,9 @@ export function setErrorPropName(name: string) {
 }
 
 export const formy = <T extends object>({
-  validate = async () => ({}),
-  errorPropName
-}: FormyOptions = {}) => (
+                                          validate = async () => ({}),
+                                          errorPropName
+                                        }: FormyOptions = {}) => (
   WrappedComponent: React.ComponentType<T & FormyComponent>
 ): React.ComponentType<T & FormyComponent> => {
   return class extends React.Component<T & FormyComponent, FormyState> {
@@ -234,6 +235,11 @@ export const formy = <T extends object>({
       })
     }
 
+    formValues = () => {
+    debugger
+      return cloneDeep(this.state.form)
+    }
+
     field = (name: string, fieldOptions: FieldOptions = {}) => {
       const {
         defaultValue = '',
@@ -311,6 +317,9 @@ export const formy = <T extends object>({
     render() {
       const props = {
         ...this.props,
+        formValues: {
+          get: () => this.formValues()
+        },
         handleSubmit: this.handleSubmit,
         resetForm: this.resetForm,
         field: this.field

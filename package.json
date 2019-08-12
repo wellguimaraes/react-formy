@@ -1,6 +1,6 @@
 {
   "name": "react-formy",
-  "version": "4.2.10",
+  "version": "4.3.0",
   "description": "A light, simple and fast HOC to keep form state",
   "main": "./lib/formy.js",
   "scripts": {

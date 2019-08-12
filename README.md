@@ -94,5 +94,12 @@ const { field } = this.props;
 field('some.deep[1].field').value = 'newValue';
 ```
 
+### Get form values at anytime
+```js
+const { formValues } = this.props;
+
+console.log(formValues.get())
+```
+
 ## License
 MIT License
