@@ -236,7 +236,6 @@ export const formy = <T extends object>({
     }
 
     formValues = () => {
-    debugger
       return cloneDeep(this.state.form)
     }
 
