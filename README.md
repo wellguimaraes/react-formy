@@ -1,5 +1,5 @@
 # React Formy
-A light, simple and fast higher order component to keep form state.
+A light, simple and fast way to keep form state.
 
 ## Install it
 `npm install react-formy --save`
@@ -10,12 +10,10 @@ Simple usage
 
 ```js
 import * as React from 'react';
-import formy from 'react-formy';
+import useFormy from 'react-formy';
 
-@formy()
-class MyFormComponent extends React.Component<Props> {
-  render() {
-    const { handleSubmit, field } = this.props;
+function MyFormComponent() {
+    const { handleSubmit, field } = useFormy()
     
     return (
       <form onSubmit={handleSubmit(values => console.log(values))}>
@@ -23,29 +21,30 @@ class MyFormComponent extends React.Component<Props> {
         <input type="email" {...field('user.email')} />
         <button type="submit">Submit</button>
       </form>
-    );
-  }
+    )
 }
 
-export default MyFormComponent;
+export default MyFormComponent
 ```
 
 ### Add some validation
 ```js
 import React from 'react';
-import formy, { setErrorPropName } from 'react-formy';
-import validate from 'validate.js';
+import useFormy, { setErrorPropName } from 'react-formy'
+import validatejs from 'validate.js'
 
-setErrorPropName('errorMessage'); // "errorText" is the default error prop name
+setErrorPropName('errorMessage') // "errorText" is the default error prop name
 
-@formy({ validate: (values) => {
-    return validate(values, {
-      'user.phone': { presence: true, format: /^\(\d+2)\ \d{5}-\d{4}/ },
-      'user.address': { presence: true }
-    });
-}})
-class MyFormComponent extends React.Component {
-  
+function MyFormComponent() {
+  const { field, handleSubmit } = useFormy({
+      validate: (values) => {
+          return validatejs(values, {
+            'user.phone': { presence: true, format: /^\(\d+2)\ \d{5}-\d{4}/ },
+            'user.address': { presence: true }
+          });
+      } 
+  })
+
   // ...
       
 }
@@ -54,13 +53,11 @@ class MyFormComponent extends React.Component {
 ### Array fields
 ```js
 import React from 'react';
-import formy from 'react-formy';
+import useFormy from 'react-formy'
 
-@formy()
-class MyFormComponent extends React.Component {
-  render() {
-    const { field } = this.props;
-    const contacts = field('contacts').value || [];
+function MyFormComponent() {
+    const { field } = useFormy()
+    const contacts = field('contacts').value || []
     
     return (
       <form>
@@ -75,30 +72,29 @@ class MyFormComponent extends React.Component {
         <button onClick={() => field('contacts').push({ name: 'Some Default Value' })}>Add contact</button>
       </form>
     )
-  }
 }
 ```
 
 ### Reset/Preset form
 ```js
-const { resetForm } = this.props;
+const { resetForm } = useFormy()
 
 resetForm(); // Reset form
-resetForm({ user: { name: 'John Doe' } }); // Reset form with user.name preset value
+resetForm({ user: { name: 'John Doe' } }) // Reset form with user.name preset value
 ```
 
 ### Set a field value programmatically
 ```js
-const { field } = this.props;
+const { setFormValues } = useFormy()
 
-field('some.deep[1].field').value = 'newValue';
+setFormValues({ some: { deep: { field: 'value' }} })
 ```
 
 ### Get form values at anytime
 ```js
-const { formValues } = this.props;
+const { getFormValues } = useFormy()
 
-console.log(formValues.get())
+console.log(getFormValues())
 ```
 
 ## License

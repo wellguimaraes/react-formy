@@ -1,8 +1,8 @@
-import at from 'lodash.at'
 import cloneDeep from 'lodash.clonedeep'
 import set from 'lodash.set'
-import * as React from 'react'
-import { FormEvent } from 'react'
+import get from 'lodash.get'
+import { FormEvent, useCallback, useEffect, useRef, useState } from 'react'
+import once from 'lodash/once'
 
 export interface KeyValue {
   [k: string]: string
@@ -11,11 +11,11 @@ export interface KeyValue {
 type Nothing = undefined | null
 
 export type FormyValidator = (
-  values: KeyValue
+  values: KeyValue,
 ) => Promise<KeyValue | Nothing> | KeyValue | Nothing
 export type inlineValidator = (
   value: any,
-  values: any
+  values: any,
 ) => Promise<string | Nothing> | string | Nothing
 
 export interface FieldOptions {
@@ -28,7 +28,7 @@ export interface FieldOptions {
 
 export type FormyField = (
   name: string,
-  options?: FieldOptions
+  options?: FieldOptions,
 ) => {
   onChange: any
   onBlur: any
@@ -37,296 +37,123 @@ export type FormyField = (
   [errorKey: string]: string
 } & any
 
-export interface FormyComponent {
-  field?: FormyField
-  handleSubmit?: (fn: (values: any) => void) => (e: FormEvent) => void
-  resetForm?: (values?: any) => void
-  formValues?: { get(): KeyValue }
-}
-
-export interface FormyState {
-  form: KeyValue
-  errors: KeyValue
-  touched: KeyValue
-  submitted: boolean
-  defaultValues: KeyValue
-}
-
-export interface FormyOptions {
-  validate?: FormyValidator
-  errorPropName?: string
-}
-
 let globalErrorPropName = 'errorText'
 
 export function setErrorPropName(name: string) {
   globalErrorPropName = name
 }
 
-export const formy = <T extends object>({
-                                          validate = async () => ({}),
-                                          errorPropName
-                                        }: FormyOptions = {}) => (
-  WrappedComponent: React.ComponentType<T & FormyComponent>
-): React.ComponentType<T & FormyComponent> => {
-  return class extends React.Component<T & FormyComponent, FormyState> {
-    state = {
-      form: {},
-      defaultValues: {},
-      errors: {},
-      touched: {},
-      submitted: false
-    }
+export function useFormy<T = any>({ validate, errorPropName = globalErrorPropName }: { validate?: FormyValidator, errorPropName?: string } = {}): { field: FormyField, handleSubmit: (fn: (values: any) => void) => (e: FormEvent) => void, resetForm: (newValues: KeyValue) => void, getFormValues: () => T, setFormValues: (newValues: any) => void } {
+  const [values, setValues] = useState({})
+  const [defaultValues, setInitialValues] = useState({} as any)
+  const [touched, setTouched] = useState({} as any)
+  const [submitted, setSubmitted] = useState(false)
+  const [validationResult, setValidationResult] = useState({})
+  const validateRef = useRef(validate)
+  const valuesRef = useRef({})
+  valuesRef.current = values
 
-    inlineValidators = {} as any
-    newFormValues = {} as any
-    setNewFormValuesTimeout = 0
+  useEffect(() => {
+    (async () => {
+      const _validate = validateRef.current
+      const _validationResult = typeof _validate === 'function' &&
+        await _validate(values)
+      setValidationResult(_validationResult || {})
+    })()
+  }, [values])
 
-    arrayUnshift = (name: string) => {
-      return (value: string) => {
-        const newFormValues = { ...this.state.form }
-        const fieldArray = (at(newFormValues, name)[0] || []) as Array<any>
+  const field = useCallback(
+    (fieldPath, { onChange, onBlur, defaultValue } = {}) => {
+      const value = get(values, fieldPath)
+      const error = get(validationResult, fieldPath)
+      const onFieldChange = (e: any) => setValues(
+        set({ ...values }, fieldPath, e && e.target ? e.target.value : e))
 
-        set(newFormValues, name, [value, ...fieldArray])
-
-        this.setState({ form: newFormValues })
-      }
-    }
-
-    arrayPush = (name: string) => {
-      return (value: any) => {
-        const newFormValues = { ...this.state.form }
-        const fieldArray = (at(newFormValues, name)[0] || []) as Array<any>
-
-        set(newFormValues, name, [...fieldArray, value])
-
-        this.setState({ form: newFormValues })
-      }
-    }
-
-    arrayRemove = (name: string) => {
-      return (index: number) => {
-        const form = this.state.form
-        const fieldArray = at(form, name)[0] as Array<any>
-
-        if (fieldArray && fieldArray.length > index) {
-          fieldArray.splice(index, 1)
-          this.setState({ form: { ...form } })
-        }
-      }
-    }
-
-    handleChange = (name: string, afterChange?: (newValue: any) => void) => {
-      return (e: any) => {
-        const newValue = e.target ? e.target.value : e
-        this.applyChanges(name, newValue, () => {
-          afterChange && afterChange(newValue)
-        })
-      }
-    }
-
-    applyChanges = (name: string, newValue: any, callback?: () => void) => {
-      const newFormValues = set({ ...this.state.form }, name, newValue)
-      this.setState({ form: newFormValues }, callback)
-    }
-
-    asyncSetValue = (name: string, newValue: any) => {
-      this.newFormValues = set({ ...this.newFormValues }, name, newValue)
-
-      clearTimeout(this.setNewFormValuesTimeout)
-
-      this.setNewFormValuesTimeout = setTimeout(() => {
-        const newFormValues = set(
-          { ...this.state.form, ...this.newFormValues },
-          name,
-          newValue
-        )
-        this.setState({
-          form: newFormValues,
-          touched: {
-            ...this.state.touched,
-            [name]: true
-          }
-        })
-        this.newFormValues = {}
-      })
-    }
-
-    handleBlur = (afterBlur?: (e: FocusEvent) => void) => {
-      return async (e: FocusEvent) => {
-        await this.validate()
-        afterBlur && afterBlur(e)
-      }
-    }
-
-    handleFocus = (name: string, afterFocus?: (e: FocusEvent) => void) => {
-      return (e: FocusEvent) => {
-        this.setState(
-          {
-            touched: {
-              ...this.state.touched,
-              [name]: true
-            }
-          },
-          () => afterFocus && afterFocus(e)
-        )
-      }
-    }
-
-    hasTouched = (name: string) => {
-      return this.state.submitted || this.state.touched.hasOwnProperty(name)
-    }
-
-    validate = async () => {
-      if (!validate) {
-        return true
+      if (defaultValue !== undefined && defaultValues[fieldPath] !==
+        defaultValue) {
+        setInitialValues({ ...defaultValues, [fieldPath]: defaultValue })
+        if (!touched[fieldPath])
+          onFieldChange(defaultValue)
       }
 
-      const customValidationErrors = Object.keys(this.inlineValidators)
-        .map(key => {
-          const value = at(this.state.form, key)[0]
-          const inlineValidator = (this.inlineValidators as any)[key]
-          const validationResult = inlineValidator(value, this.state.form)
-
-          return {
-            key,
-            validationResult
-          }
-        })
-        .filter(it => it.validationResult)
-        .reduce(
-          (prev, curr) => {
-            prev[curr.key] = curr.validationResult
-            return prev
-          },
-          {} as any
-        )
-
-      const result = {
-        ...(await validate(this.state.form)),
-        ...customValidationErrors
+      function touchField() {
+        if (!touched[fieldPath])
+          setTouched({ ...touched, [fieldPath]: true })
       }
 
-      if (!result || !Object.keys(result).length) {
-        this.setState({ errors: {} })
-        return true
-      } else {
-        this.setState({ errors: result })
-        return false
-      }
-    }
+      // noinspection JSUnusedGlobalSymbols
+      return {
+        remove(index: number) {
+          if (Array.isArray(value)) return
 
-    handleSubmit = (handler: (values: any) => void) => {
-      return (e: FormEvent) => {
-        e.preventDefault()
-        this.setState({ submitted: true }, async () => {
-          if ((await this.validate()) && handler)
-            handler(cloneDeep(this.state.form))
-        })
-      }
-    }
-
-    resetForm = (newValues: any = {}) => {
-      this.setState({
-        form: { ...(newValues || {}) },
-        touched: {},
-        submitted: false,
-        errors: {}
-      })
-    }
-
-    formValues = () => {
-      return cloneDeep(this.state.form)
-    }
-
-    field = (name: string, fieldOptions: FieldOptions = {}) => {
-      const {
-        defaultValue = '',
-        onChange,
-        onBlur,
-        onFocus,
-        validate
-      } = fieldOptions
-      const errorProp = errorPropName || globalErrorPropName
-
-      if (validate) {
-        this.inlineValidators[name] = validate
-      }
-
-      const field = {
-        name: name,
-        onFocus: this.handleFocus(name, onFocus),
-        onBlur: this.handleBlur(onBlur),
-        onChange: this.handleChange(name, onChange),
-        [errorProp]: this.hasTouched(name) && (this.state.errors as any)[name]
-      }
-
-      if (
-        defaultValue &&
-        !this.hasTouched(name) &&
-        (this.state.defaultValues as any)[name] !== defaultValue
-      ) {
-        const newFormValues = set({ ...this.state.form }, name, defaultValue)
-        this.setState({
-          form: newFormValues,
-          defaultValues: { ...this.state.defaultValues, [name]: defaultValue }
-        })
-      }
-
-      Object.defineProperty(field, 'value', {
-        enumerable: true,
-        set: v => {
-          this.setState({
-            touched: {
-              ...this.state.touched,
-              [name]: true
-            }
-          })
-          this.asyncSetValue(name, v)
+          onFieldChange((value as any[]).filter((_, i) => i !== index))
         },
-        get: () => {
-          const value = at(this.state.form, name)[0]
-          return value === undefined || value === null ? defaultValue : value
-        }
-      })
-
-      const fieldValue = at(this.state.form, name)[0]
-
-      if (
-        fieldValue === undefined ||
-        fieldValue === null ||
-        Array.isArray(fieldValue)
-      ) {
-        Object.defineProperty(field, 'unshift', {
-          value: this.arrayUnshift(name)
-        })
-
-        Object.defineProperty(field, 'push', {
-          value: this.arrayPush(name)
-        })
-
-        Object.defineProperty(field, 'remove', {
-          value: this.arrayRemove(name)
-        })
-      }
-
-      return field
-    }
-
-    render() {
-      const props = {
-        ...this.props,
-        formValues: {
-          get: () => this.formValues()
+        unshift(v: any) {
+          onFieldChange([v, ...((value || []) as any[])])
         },
-        handleSubmit: this.handleSubmit,
-        resetForm: this.resetForm,
-        field: this.field
+        push(v: any) {
+          onFieldChange([...((value || []) as any[]), v])
+        },
+        get value() {
+          return value || ''
+        },
+        set value(newValue) {
+          setTimeout(() => onFieldChange(newValue))
+        },
+        onChange: (e: any) => {
+          touchField()
+          onFieldChange(e)
+          typeof onChange === 'function' && onChange(e)
+        },
+        onBlur: (e: any) => {
+          touchField()
+          typeof onBlur === 'function' && onBlur(e)
+        },
+        get [errorPropName]() {
+          return (submitted && error) || (touched[fieldPath] && error)
+        },
       }
+    }, [
+      values,
+      validationResult,
+      defaultValues,
+      errorPropName,
+      touched,
+      submitted
+    ])
 
-      return <WrappedComponent {...props} />
+  const handleSubmit = useCallback((onSubmit) => (e: any) => {
+    e.preventDefault()
+    setSubmitted(true)
+
+    if (validationResult && Object.keys(validationResult).length) {
+      return
     }
+
+    typeof onSubmit === 'function' && onSubmit(values)
+  }, [validationResult, values])
+
+  const resetForm = useCallback((newValues = {}) => {
+    setValues(newValues)
+    setTouched({})
+    setSubmitted(false)
+  }, [])
+
+  const setFormValues = useCallback(newValues => {
+    setValues({ ...valuesRef.current, ...newValues })
+  }, [])
+
+  const getFormValues = useCallback(once(() => {
+    return cloneDeep(values) as T
+  }), [values])
+
+  return {
+    field,
+    handleSubmit,
+    resetForm,
+    getFormValues,
+    setFormValues,
   }
 }
 
-export default formy
+export default useFormy
