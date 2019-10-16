@@ -4,27 +4,20 @@ import get from 'lodash.get'
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react'
 import once from 'lodash/once'
 
+let globalErrorPropName = 'errorText'
+
+type Nothing = undefined | null
+
 export interface KeyValue {
   [k: string]: string
 }
 
-type Nothing = undefined | null
-
-export type FormyValidator = (
-  values: KeyValue,
-  submitted: boolean
-) => Promise<KeyValue | Nothing> | KeyValue | Nothing
-export type inlineValidator = (
-  value: any,
-  values: any,
-) => Promise<string | Nothing> | string | Nothing
+export type FormyValidator = (values: KeyValue) => Promise<KeyValue | Nothing> | KeyValue | Nothing
 
 export interface FieldOptions {
   defaultValue?: any
   onChange?: (newValue: any) => void
   onBlur?: (e: FocusEvent) => void
-  onFocus?: (e: FocusEvent) => void
-  validate?: inlineValidator
 }
 
 export type FormyField = (
@@ -38,37 +31,48 @@ export type FormyField = (
   [errorKey: string]: string
 } & any
 
-let globalErrorPropName = 'errorText'
-
 export function setErrorPropName(name: string) {
   globalErrorPropName = name
 }
 
+function useStateRef<T = any>(initialValue?: T): [() => T, (newValue: T) => void] {
+  const [value, setValue] = useState(initialValue)
+  const valueRef = useRef(value)
+  valueRef.current = value
+  const getCurrentValue = useCallback(() => valueRef.current as T, [])
+
+  return [
+    getCurrentValue,
+    setValue,
+  ]
+}
+
 export function useFormy<T = any>({ validate, errorPropName = globalErrorPropName }: { validate?: FormyValidator, errorPropName?: string } = {}): { field: FormyField, handleSubmit: (fn: (values: any) => void) => (e: FormEvent) => void, resetForm: (newValues: KeyValue) => void, getFormValues: () => T, setFormValues: (newValues: any) => void } {
-  const [values, setValues] = useState({})
+  const validateRef = useRef(validate)
+  const [getValues, setValues] = useStateRef({})
   const [defaultValues, setInitialValues] = useState({} as any)
   const [touched, setTouched] = useState({} as any)
   const [submitted, setSubmitted] = useState(false)
-  const [validationResult, setValidationResult] = useState({})
-  const validateRef = useRef(validate)
-  const valuesRef = useRef({})
-  valuesRef.current = values
+  const [validationResult] = useState({})
+  const [getValidationResult, setValidationResult] = useStateRef({})
+  const getFieldValue = useCallback((fieldPath) => get(getValues(), fieldPath),
+    [])
+  const values = getValues()
 
   useEffect(() => {
     (async () => {
       const _validate = validateRef.current
       const _validationResult = typeof _validate === 'function' &&
-        await _validate(values, submitted)
+        await _validate(values)
       setValidationResult(_validationResult || {})
     })()
-  }, [values, submitted])
+  }, [values])
 
   const field = useCallback(
     (fieldPath, { onChange, onBlur, defaultValue } = {}) => {
-      const value = get(values, fieldPath)
-      const error = get(validationResult, fieldPath)
+      const error = get(getValidationResult(), fieldPath)
       const onFieldChange = (e: any) => setValues(
-        set({ ...values }, fieldPath, e && e.target ? e.target.value : e))
+        set({ ...getValues() }, fieldPath, e && e.target ? e.target.value : e))
 
       if (defaultValue !== undefined && defaultValues[fieldPath] !==
         defaultValue) {
@@ -77,7 +81,7 @@ export function useFormy<T = any>({ validate, errorPropName = globalErrorPropNam
           onFieldChange(defaultValue)
       }
 
-      function touchField() {
+      const touchField = () => {
         if (!touched[fieldPath])
           setTouched({ ...touched, [fieldPath]: true })
       }
@@ -85,24 +89,24 @@ export function useFormy<T = any>({ validate, errorPropName = globalErrorPropNam
       // noinspection JSUnusedGlobalSymbols
       return {
         remove(index: number) {
-          if (Array.isArray(value)) return
+          if (Array.isArray(getFieldValue(fieldPath))) return
 
-          onFieldChange((value as any[]).filter((_, i) => i !== index))
+          onFieldChange(
+            (getFieldValue(fieldPath) as any[]).filter((_, i) => i !== index))
         },
         unshift(v: any) {
-          onFieldChange([v, ...((value || []) as any[])])
+          onFieldChange([v, ...((getFieldValue(fieldPath) || []) as any[])])
         },
         push(v: any) {
-          onFieldChange([...((value || []) as any[]), v])
+          onFieldChange([...((getFieldValue(fieldPath) || []) as any[]), v])
         },
         get value() {
-          return value || ''
+          return getFieldValue(fieldPath) || ''
         },
         set value(newValue) {
           setTimeout(() => onFieldChange(newValue))
         },
         onChange: (e: any) => {
-          touchField()
           onFieldChange(e)
           typeof onChange === 'function' && onChange(e)
         },
@@ -115,24 +119,26 @@ export function useFormy<T = any>({ validate, errorPropName = globalErrorPropNam
         },
       }
     }, [
-      values,
       validationResult,
       defaultValues,
       errorPropName,
       touched,
-      submitted
+      submitted,
     ])
 
   const handleSubmit = useCallback((onSubmit) => (e: any) => {
     e.preventDefault()
+
     setSubmitted(true)
+
+    const validationResult = getValidationResult()
 
     if (validationResult && Object.keys(validationResult).length) {
       return
     }
 
-    typeof onSubmit === 'function' && onSubmit(values)
-  }, [validationResult, values])
+    typeof onSubmit === 'function' && onSubmit(getValues())
+  }, [])
 
   const resetForm = useCallback((newValues = {}) => {
     setValues(newValues)
@@ -141,12 +147,12 @@ export function useFormy<T = any>({ validate, errorPropName = globalErrorPropNam
   }, [])
 
   const setFormValues = useCallback(newValues => {
-    setValues({ ...valuesRef.current, ...newValues })
+    setValues({ ...getValues(), ...newValues })
   }, [])
 
   const getFormValues = useCallback(once(() => {
-    return cloneDeep(values) as T
-  }), [values])
+    return cloneDeep(getValues()) as T
+  }), [])
 
   return {
     field,
