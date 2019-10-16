@@ -1,6 +1,6 @@
 {
   "name": "react-formy",
-  "version": "5.2.4",
+  "version": "5.3.0",
   "description": "A light, simple and fast way to keep form state",
   "main": "./lib/formy.js",
   "scripts": {
