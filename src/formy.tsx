@@ -12,6 +12,7 @@ type Nothing = undefined | null
 
 export type FormyValidator = (
   values: KeyValue,
+  submitted: boolean
 ) => Promise<KeyValue | Nothing> | KeyValue | Nothing
 export type inlineValidator = (
   value: any,
@@ -57,10 +58,10 @@ export function useFormy<T = any>({ validate, errorPropName = globalErrorPropNam
     (async () => {
       const _validate = validateRef.current
       const _validationResult = typeof _validate === 'function' &&
-        await _validate(values)
+        await _validate(values, submitted)
       setValidationResult(_validationResult || {})
     })()
-  }, [values])
+  }, [values, submitted])
 
   const field = useCallback(
     (fieldPath, { onChange, onBlur, defaultValue } = {}) => {
