@@ -43,7 +43,10 @@ function useStateRef<T = any>(initialValue?: T): [() => T, (newValue: T) => void
 
   return [
     getCurrentValue,
-    setValue,
+    (v) => {
+      setValue(v)
+      valueRef.current
+    },
   ]
 }
 
@@ -55,8 +58,7 @@ export function useFormy<T = any>({ validate, errorPropName = globalErrorPropNam
   const [submitted, setSubmitted] = useState(false)
   const [validationResult] = useState({})
   const [getValidationResult, setValidationResult] = useStateRef({})
-  const getFieldValue = useCallback((fieldPath) => get(getValues(), fieldPath),
-    [])
+  const getFieldValue = useCallback((fieldPath) => get(getValues(), fieldPath), [])
   const values = getValues()
 
   useEffect(() => {
