@@ -155,7 +155,8 @@ export function useFormy<T = any>({
           setTimeout(() => onFieldChange(fieldPath, newValue))
         },
         get value() {
-          return getFieldValue(fieldPath) || ''
+          let currentValue = getFieldValue(fieldPath)
+          return currentValue === undefined ? '' : currentValue
         },
         get [errorPropName]() {
           let error = get(getValidationResult(), fieldPath)
