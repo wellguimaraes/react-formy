@@ -66,9 +66,12 @@ function useStateRef<T = any>(
 let getFieldOnChange = memoizee(
   (
     fieldPath: string,
+    touched: { [key: string]: boolean },
+    setTouched: (value: unknown) => void,
     onFieldChange: (fieldPath: string, e: any) => void,
-    onChange: (e: any) => void
+    onChange: (e: any) => void,
   ) => (e: any) => {
+    if (!touched[fieldPath]) setTouched({ ...touched, [fieldPath]: true })
     onFieldChange(fieldPath, e)
     typeof onChange === 'function' && onChange(e)
   },
@@ -112,7 +115,7 @@ export function useFormy<T = any>({
   )
 
   let runValidationRef = useRef(
-    debounce(async () => {
+    debounce(async (values) => {
       let _validate = validateRef.current
       let _validationResult =
         (typeof _validate === 'function' && (await _validate(values))) || {}
@@ -128,7 +131,7 @@ export function useFormy<T = any>({
 
   useEffect(() => {
     let _validate = runValidationRef.current
-    if (typeof _validate === 'function') _validate()
+    if (typeof _validate === 'function') _validate(values)
   }, [values])
 
   let onFieldChange = useMemo(
@@ -195,15 +198,13 @@ export function useFormy<T = any>({
 
       Object.defineProperty(fieldProps, 'onChange', {
         enumerable: true,
-        value: getFieldOnChange(fieldPath, onFieldChange, onChange)
+        value: getFieldOnChange(fieldPath, touched, setTouched, onFieldChange, onChange)
       })
 
       Object.defineProperty(fieldProps, 'onBlur', {
         enumerable: true,
         value: getFieldOnBlur(fieldPath, touched, setTouched, onBlur)
       })
-
-      console.log(fieldPath, fieldProps)
 
       return fieldProps
     },
