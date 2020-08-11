@@ -1,11 +1,11 @@
 {
   "name": "react-formy",
-  "version": "5.5.2",
+  "version": "5.8.0",
   "description": "A light, simple and fast way to keep form state",
   "main": "./lib/formy.js",
   "scripts": {
     "build": "tsc",
-    "prepublish": "yarn build"
+    "prepublishOnly": "yarn build"
   },
   "repository": {
     "type": "git",
@@ -35,6 +35,6 @@
     "lodash.get": "^4.4.2",
     "lodash.set": "^4.3.2",
     "memoizee": "^0.4.14",
-    "typescript": "^3.5.3"
+    "typescript": "^3.9.7"
   }
 }
