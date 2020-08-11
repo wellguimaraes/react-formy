@@ -15,13 +15,26 @@ import memoizee from 'memoizee'
 
 type Nothing = undefined | null
 
-export interface KeyValue {
-  [k: string]: string
+type Formy<T = any> = {
+  field: FormyField
+  handleSubmit: (fn: (values: any) => void) => (e: FormEvent) => void
+  resetForm: (newValues: Partial<T>) => void
+  getFormValues: () => Partial<T>
+  setFormValues: (newValues: any) => void
 }
 
-export type FormyValidator = (
-  values: KeyValue
-) => Promise<KeyValue | Nothing> | KeyValue | Nothing
+type FormyParams<T = any> = {
+  validate?: FormyValidator<Partial<T>>;
+  errorPropName?: string
+}
+
+export interface KeyValue<T = any> {
+  [k: string]: T
+}
+
+export type FormyValidator<T = any> = (
+  values: T
+) => Promise<KeyValue<string> | Nothing> | KeyValue<string> | Nothing
 
 export interface FieldOptions {
   defaultValue?: any
@@ -49,10 +62,10 @@ export function setErrorPropName(name: string) {
 function useStateRef<T = any>(
   initialValue?: T
 ): [() => T, (newValue: T) => void] {
-  let [value, setValue] = useState(initialValue)
-  let valueRef = useRef(value)
+  const [value, setValue] = useState(initialValue)
+  const valueRef = useRef(value)
   valueRef.current = value
-  let getCurrentValue = useCallback(() => valueRef.current as T, [])
+  const getCurrentValue = useCallback(() => valueRef.current as T, [])
 
   return [
     getCurrentValue,
@@ -63,78 +76,81 @@ function useStateRef<T = any>(
   ]
 }
 
-let getFieldOnChange = memoizee(
+const getFieldOnChange = memoizee(
   (
     fieldPath: string,
     touched: { [key: string]: boolean },
     setTouched: (value: unknown) => void,
     onFieldChange: (fieldPath: string, e: any) => void,
-    onChange: (e: any) => void,
+    onChange: (e: any) => void
   ) => (e: any) => {
-    if (!touched[fieldPath]) setTouched({ ...touched, [fieldPath]: true })
+    if (!touched[fieldPath]) {
+      setTouched({ ...touched, [fieldPath]: true })
+    }
     onFieldChange(fieldPath, e)
     typeof onChange === 'function' && onChange(e)
   },
   { length: 1 }
 )
 
-let getFieldOnBlur = memoizee(
+const getFieldOnBlur = memoizee(
   (
     fieldPath: string,
     touched: { [key: string]: boolean },
     setTouched: (value: unknown) => void,
     onBlur: (e: any) => any
   ) => (e: any) => {
-    if (!touched[fieldPath]) setTouched({ ...touched, [fieldPath]: true })
+    if (!touched[fieldPath]) {
+      setTouched({ ...touched, [fieldPath]: true })
+    }
     typeof onBlur === 'function' && onBlur(e)
   },
   { length: 1 }
 )
 
+
 export function useFormy<T = any>({
   validate,
   errorPropName = globalErrorPropName
-}: { validate?: FormyValidator; errorPropName?: string } = {}): {
-  field: FormyField
-  handleSubmit: (fn: (values: any) => void) => (e: FormEvent) => void
-  resetForm: (newValues: KeyValue) => void
-  getFormValues: () => T
-  setFormValues: (newValues: any) => void
-} {
-  let validateRef = useRef(validate)
-  let [getValues, setValues] = useStateRef({})
-  let [defaultValues, setInitialValues] = useState({} as any)
-  let [touched, setTouched] = useState({} as any)
-  let [submitted, setSubmitted] = useState(false)
-  let [validationResult] = useState({})
-  let [getValidationResult, setValidationResult] = useStateRef({})
-  let values = getValues()
-  let getFieldValue = useCallback(
+}: FormyParams<T> = {}): Formy<T> {
+  const validateRef = useRef(validate)
+  const [getValues, setValues] = useStateRef({})
+  const [defaultValues, setInitialValues] = useState({} as any)
+  const [touched, setTouched] = useState({} as any)
+  const [submitted, setSubmitted] = useState(false)
+  const [validationResult] = useState({})
+  const [getValidationResult, setValidationResult] = useStateRef({})
+  const values = getValues()
+  const getFieldValue = useCallback(
     fieldPath => get(getValues(), fieldPath),
     []
   )
 
-  let runValidationRef = useRef(
-    debounce(async (values) => {
-      let _validate = validateRef.current
-      let _validationResult =
+  const runValidationRef = useRef(
+    debounce(async (values: Partial<T>) => {
+      const _validate = validateRef.current
+      const _validationResult =
         (typeof _validate === 'function' && (await _validate(values))) || {}
-      let _currentValidationResult = getValidationResult() || {}
+      const _currentValidationResult = getValidationResult() || {}
 
       if (
         JSON.stringify(_currentValidationResult) !==
         JSON.stringify(_validationResult)
-      )
+      ) {
         setValidationResult(_validationResult || {})
+      }
     }, 300)
   )
 
   useEffect(() => {
-    let _validate = runValidationRef.current
-    if (typeof _validate === 'function') _validate(values)
+    const _validate = runValidationRef.current
+
+    if (typeof _validate === 'function') {
+      (_validate as FormyValidator)(values)
+    }
   }, [values])
 
-  let onFieldChange = useMemo(
+  const onFieldChange = useMemo(
     () => (fieldPath: string, e: any) =>
       setValues(
         set({ ...getValues() }, fieldPath, e && e.target ? e.target.value : e)
@@ -142,34 +158,38 @@ export function useFormy<T = any>({
     []
   )
 
-  let field = useCallback(
+  const field = useCallback(
     (fieldPath, { onChange, onBlur, defaultValue } = {}) => {
       if (
         defaultValue !== undefined &&
         defaultValues[fieldPath] !== defaultValue
       ) {
         setInitialValues({ ...defaultValues, [fieldPath]: defaultValue })
-        if (!touched[fieldPath]) onFieldChange(fieldPath, defaultValue)
+        if (!touched[fieldPath]) {
+          onFieldChange(fieldPath, defaultValue)
+        }
       }
 
       // noinspection JSUnusedGlobalSymbols
-      let fieldProps = {
+      const fieldProps = {
         set value(newValue) {
           setTimeout(() => onFieldChange(fieldPath, newValue))
         },
         get value() {
-          let currentValue = getFieldValue(fieldPath)
+          const currentValue = getFieldValue(fieldPath)
           return currentValue === undefined ? '' : currentValue
         },
         get [errorPropName]() {
-          let error = get(getValidationResult(), fieldPath)
+          const error = get(getValidationResult(), fieldPath)
           return (submitted && error) || (touched[fieldPath] && error)
         }
       }
 
       Object.defineProperty(fieldProps, 'remove', {
         value: (index: number) => {
-          if (Array.isArray(getFieldValue(fieldPath))) return
+          if (Array.isArray(getFieldValue(fieldPath))) {
+            return
+          }
 
           onFieldChange(
             fieldPath,
@@ -198,7 +218,8 @@ export function useFormy<T = any>({
 
       Object.defineProperty(fieldProps, 'onChange', {
         enumerable: true,
-        value: getFieldOnChange(fieldPath, touched, setTouched, onFieldChange, onChange)
+        value: getFieldOnChange(fieldPath, touched, setTouched, onFieldChange,
+          onChange)
       })
 
       Object.defineProperty(fieldProps, 'onBlur', {
@@ -211,34 +232,34 @@ export function useFormy<T = any>({
     [validationResult, defaultValues, errorPropName, touched, submitted]
   )
 
-  let handleSubmit = useCallback(
+  const handleSubmit = useCallback(
     onSubmit => (e: any) => {
       e.preventDefault()
 
       setSubmitted(true)
 
-      let validationResult = getValidationResult()
+      const validationResult = getValidationResult()
 
       if (validationResult && Object.keys(validationResult).length) {
         return
       }
 
-      typeof onSubmit === 'function' && onSubmit(getValues())
+      onSubmit?.(getValues())
     },
     []
   )
 
-  let resetForm = useCallback((newValues = {}) => {
+  const resetForm = useCallback((newValues = {}) => {
     setValues(newValues)
     setTouched({})
     setSubmitted(false)
   }, [])
 
-  let setFormValues = useCallback(newValues => {
+  const setFormValues = useCallback(newValues => {
     setValues({ ...getValues(), ...newValues })
   }, [])
 
-  let getFormValues = useCallback(
+  const getFormValues = useCallback(
     once(() => {
       return cloneDeep(getValues()) as T
     }),

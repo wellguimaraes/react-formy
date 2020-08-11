@@ -1,9 +1,20 @@
 import { FormEvent } from 'react';
 declare type Nothing = undefined | null;
-export interface KeyValue {
-    [k: string]: string;
+declare type Formy<T = any> = {
+    field: FormyField;
+    handleSubmit: (fn: (values: any) => void) => (e: FormEvent) => void;
+    resetForm: (newValues: Partial<T>) => void;
+    getFormValues: () => Partial<T>;
+    setFormValues: (newValues: any) => void;
+};
+declare type FormyParams<T = any> = {
+    validate?: FormyValidator<Partial<T>>;
+    errorPropName?: string;
+};
+export interface KeyValue<T = any> {
+    [k: string]: T;
 }
-export declare type FormyValidator = (values: KeyValue) => Promise<KeyValue | Nothing> | KeyValue | Nothing;
+export declare type FormyValidator<T = any> = (values: T) => Promise<KeyValue<string> | Nothing> | KeyValue<string> | Nothing;
 export interface FieldOptions {
     defaultValue?: any;
     onChange?: (newValue: any) => void;
@@ -17,15 +28,6 @@ export declare type FormyField = (name: string, options?: FieldOptions) => {
     [errorKey: string]: string;
 } & any;
 export declare function setErrorPropName(name: string): void;
-export declare function useFormy<T = any>({ validate, errorPropName }?: {
-    validate?: FormyValidator;
-    errorPropName?: string;
-}): {
-    field: FormyField;
-    handleSubmit: (fn: (values: any) => void) => (e: FormEvent) => void;
-    resetForm: (newValues: KeyValue) => void;
-    getFormValues: () => T;
-    setFormValues: (newValues: any) => void;
-};
+export declare function useFormy<T = any>({ validate, errorPropName }?: FormyParams<T>): Formy<T>;
 export default useFormy;
 //# sourceMappingURL=formy.d.ts.map
