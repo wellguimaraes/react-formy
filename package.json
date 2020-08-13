@@ -1,6 +1,6 @@
 {
   "name": "react-formy",
-  "version": "5.9.0",
+  "version": "5.10.3",
   "description": "A light, simple and fast way to keep form state",
   "main": "./lib/formy.js",
   "scripts": {
@@ -26,14 +26,10 @@
     "react": "^16.10.2"
   },
   "dependencies": {
-    "@types/lodash.clonedeep": "^4.5.6",
-    "@types/lodash.get": "^4.4.6",
-    "@types/lodash.set": "^4.3.6",
+    "@types/lodash": "^4.14.159",
     "@types/memoizee": "^0.4.3",
     "@types/react": "^16.9.6",
-    "lodash.clonedeep": "^4.5.0",
-    "lodash.get": "^4.4.2",
-    "lodash.set": "^4.3.2",
+    "lodash": "^4.17.20",
     "memoizee": "^0.4.14",
     "typescript": "^3.9.7"
   }
