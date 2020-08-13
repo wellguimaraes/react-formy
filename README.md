@@ -1,6 +1,8 @@
 # React Formy
 A light, simple and fast way to keep form state.
 
+> Don't use it inside React.StrictMode
+
 ## Install it
 `npm install react-formy --save`
 

@@ -1,82 +1,46 @@
-import cloneDeep from 'lodash.clonedeep'
-import {
-  FormEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState
-} from 'react'
-import once from 'lodash/once'
+import cloneDeep from 'lodash/cloneDeep'
+import debounce from 'lodash/debounce'
 import get from 'lodash/get'
 import set from 'lodash/set'
-import debounce from 'lodash/debounce'
 import memoizee from 'memoizee'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  FieldOptions,
+  Formy,
+  FormyField,
+  FormyParams,
+  FormyValidator
+} from './types'
 
-type Nothing = undefined | null
-
-type Formy<T = any> = {
-  field: FormyField
-  handleSubmit: (fn: (values: any) => void) => (e: FormEvent) => void
-  resetForm: (newValues: Partial<T>) => void
-  getFormValues: () => Partial<T>
-  setFormValues: (newValues: any) => void
+export {
+  FormyValidator,
+  Formy,
+  FieldOptions,
+  FormyField
 }
 
-type FormyParams<T = any> = {
-  validate?: FormyValidator<Partial<T>>;
-  errorPropName?: string
-}
-
-export interface KeyValue<T = any> {
-  [k: string]: T
-}
-
-export type FormyValidator<T = any> = (
-  values: T
-) => Promise<KeyValue<string> | Nothing> | KeyValue<string> | Nothing
-
-export interface FieldOptions {
-  defaultValue?: any
-  onChange?: (newValue: any) => void
-  onBlur?: (e: FocusEvent) => void
-}
-
-export type FormyField = (
-  name: string,
-  options?: FieldOptions
-) => {
-  onChange: any
-  onBlur: any
-  name: any
-  value: any
-  [errorKey: string]: string
-} & any
-
-let globalErrorPropName = 'errorText'
+let globalErrorPropName = "errorText";
 
 export function setErrorPropName(name: string) {
-  globalErrorPropName = name
+  globalErrorPropName = name;
 }
 
 function useStateRef<T = any>(
   initialValue?: T
 ): [() => T, (newValue: T) => void] {
-  const [value, setValue] = useState(initialValue)
-  const valueRef = useRef(value)
-  valueRef.current = value
-  const getCurrentValue = useCallback(() => valueRef.current as T, [])
+  const [value, setValue] = useState(initialValue);
+  const valueRef = useRef(value);
+  valueRef.current = value;
+  const getCurrentValue = useCallback(() => valueRef.current as T, []);
+  const setCurrentValue = useCallback((v) => {
+    setValue(v);
+    valueRef.current = v;
+  }, []);
 
-  return [
-    getCurrentValue,
-    v => {
-      setValue(v)
-      valueRef.current
-    }
-  ]
+  return [getCurrentValue, setCurrentValue];
 }
 
-const getFieldOnChange = memoizee(
+const getFieldChangeListener = memoizee(
   (
     fieldPath: string,
     touched: { [key: string]: boolean },
@@ -85,15 +49,15 @@ const getFieldOnChange = memoizee(
     onChange: (e: any) => void
   ) => (e: any) => {
     if (!touched[fieldPath]) {
-      setTouched({ ...touched, [fieldPath]: true })
+      setTouched({ ...touched, [fieldPath]: true });
     }
-    onFieldChange(fieldPath, e)
-    typeof onChange === 'function' && onChange(e)
+    onFieldChange(fieldPath, e);
+    typeof onChange === "function" && onChange(e);
   },
   { length: 1 }
-)
+);
 
-const getFieldOnBlur = memoizee(
+const getFieldBlurListener = memoizee(
   (
     fieldPath: string,
     touched: { [key: string]: boolean },
@@ -101,62 +65,67 @@ const getFieldOnBlur = memoizee(
     onBlur: (e: any) => any
   ) => (e: any) => {
     if (!touched[fieldPath]) {
-      setTouched({ ...touched, [fieldPath]: true })
+      setTouched({ ...touched, [fieldPath]: true });
     }
-    typeof onBlur === 'function' && onBlur(e)
+    typeof onBlur === "function" && onBlur(e);
   },
   { length: 1 }
-)
-
+);
 
 export function useFormy<T = any>({
-  validate,
-  errorPropName = globalErrorPropName
-}: FormyParams<T> = {}): Formy<T> {
-  const validateRef = useRef(validate)
-  const [getValues, setValues] = useStateRef({})
-  const [defaultValues, setInitialValues] = useState({} as any)
-  const [touched, setTouched] = useState({} as any)
-  const [submitted, setSubmitted] = useState(false)
-  const [validationResult] = useState({})
-  const [getValidationResult, setValidationResult] = useStateRef({})
-  const values = getValues()
+                                    validate,
+                                    errorPropName = globalErrorPropName,
+                                  }: FormyParams<T> = {}): Formy<T> {
+  const validateRef = useRef(validate);
+  const [getValues, setValues] = useStateRef({});
+  const [defaultValues, setInitialValues] = useState({} as any);
+  const [touched, setTouched] = useState({} as any);
+  const [isDirty, setDirty] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [validationResult] = useState({});
+  const [getValidationResult, setValidationResult] = useStateRef({});
+  const values = getValues();
+
   const getFieldValue = useCallback(
-    fieldPath => get(getValues(), fieldPath),
+    (fieldPath) => get(getValues(), fieldPath),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
-  )
+  );
 
   const runValidationRef = useRef(
     debounce(async (values: Partial<T>) => {
-      const _validate = validateRef.current
+      const _validate = validateRef.current;
       const _validationResult =
-        (typeof _validate === 'function' && (await _validate(values))) || {}
-      const _currentValidationResult = getValidationResult() || {}
+        (typeof _validate === "function" && (await _validate(values))) || {};
+      const _currentValidationResult = getValidationResult() || {};
 
       if (
         JSON.stringify(_currentValidationResult) !==
         JSON.stringify(_validationResult)
       ) {
-        setValidationResult(_validationResult || {})
+        setValidationResult(_validationResult || {});
       }
     }, 300)
-  )
+  );
 
   useEffect(() => {
-    const _validate = runValidationRef.current
+    const _validate = runValidationRef.current;
 
-    if (typeof _validate === 'function') {
-      (_validate as FormyValidator)(values)
+    if (typeof _validate === "function") {
+      (_validate as FormyValidator)(values);
     }
-  }, [values])
+  }, [values]);
 
   const onFieldChange = useMemo(
-    () => (fieldPath: string, e: any) =>
+    () => (fieldPath: string, e: any) => {
+      setDirty(true);
       setValues(
         set({ ...getValues() }, fieldPath, e && e.target ? e.target.value : e)
-      ),
+      );
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
-  )
+  );
 
   const field = useCallback(
     (fieldPath, { onChange, onBlur, defaultValue } = {}) => {
@@ -164,115 +133,129 @@ export function useFormy<T = any>({
         defaultValue !== undefined &&
         defaultValues[fieldPath] !== defaultValue
       ) {
-        setInitialValues({ ...defaultValues, [fieldPath]: defaultValue })
+        setInitialValues({ ...defaultValues, [fieldPath]: defaultValue });
         if (!touched[fieldPath]) {
-          onFieldChange(fieldPath, defaultValue)
+          onFieldChange(fieldPath, defaultValue);
         }
       }
 
       // noinspection JSUnusedGlobalSymbols
       const fieldProps = {
         set value(newValue) {
-          setTimeout(() => onFieldChange(fieldPath, newValue))
+          setTimeout(() => onFieldChange(fieldPath, newValue));
         },
         get value() {
-          const currentValue = getFieldValue(fieldPath)
-          return currentValue === undefined ? '' : currentValue
+          const currentValue = getFieldValue(fieldPath);
+          return currentValue === undefined ? "" : currentValue;
         },
         get [errorPropName]() {
-          const error = get(getValidationResult(), fieldPath)
-          return (submitted && error) || (touched[fieldPath] && error)
-        }
-      }
+          const error = get(getValidationResult(), fieldPath);
+          return (submitted && error) || (touched[fieldPath] && error);
+        },
+      };
 
-      Object.defineProperty(fieldProps, 'remove', {
+      Object.defineProperty(fieldProps, "remove", {
         value: (index: number) => {
           if (Array.isArray(getFieldValue(fieldPath))) {
-            return
+            return;
           }
 
           onFieldChange(
             fieldPath,
             (getFieldValue(fieldPath) as any[]).filter((_, i) => i !== index)
-          )
-        }
-      })
+          );
+        },
+      });
 
-      Object.defineProperty(fieldProps, 'unshift', {
+      Object.defineProperty(fieldProps, "unshift", {
         value: (v: any) => {
           onFieldChange(fieldPath, [
             v,
-            ...((getFieldValue(fieldPath) || []) as any[])
-          ])
-        }
-      })
+            ...((getFieldValue(fieldPath) || []) as any[]),
+          ]);
+        },
+      });
 
-      Object.defineProperty(fieldProps, 'push', {
+      Object.defineProperty(fieldProps, "push", {
         value: (v: any) => {
           onFieldChange(fieldPath, [
             ...((getFieldValue(fieldPath) || []) as any[]),
-            v
-          ])
-        }
-      })
+            v,
+          ]);
+        },
+      });
 
-      Object.defineProperty(fieldProps, 'onChange', {
+      Object.defineProperty(fieldProps, "onChange", {
         enumerable: true,
-        value: getFieldOnChange(fieldPath, touched, setTouched, onFieldChange,
-          onChange)
-      })
+        value: getFieldChangeListener(
+          fieldPath,
+          touched,
+          setTouched,
+          onFieldChange,
+          onChange
+        ),
+      });
 
-      Object.defineProperty(fieldProps, 'onBlur', {
+      Object.defineProperty(fieldProps, "onBlur", {
         enumerable: true,
-        value: getFieldOnBlur(fieldPath, touched, setTouched, onBlur)
-      })
+        value: getFieldBlurListener(fieldPath, touched, setTouched, onBlur),
+      });
 
-      return fieldProps
+      return fieldProps;
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [validationResult, defaultValues, errorPropName, touched, submitted]
-  )
+  );
 
   const handleSubmit = useCallback(
-    onSubmit => (e: any) => {
-      e.preventDefault()
+    (onSubmit) => (e: any) => {
+      e.preventDefault();
 
-      setSubmitted(true)
+      setSubmitted(true);
 
-      const validationResult = getValidationResult()
+      const validationResult = getValidationResult();
 
       if (validationResult && Object.keys(validationResult).length) {
-        return
+        return;
       }
 
-      onSubmit?.(getValues())
+      onSubmit?.(getValues());
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
-  )
+  );
 
-  const resetForm = useCallback((newValues = {}) => {
-    setValues(newValues)
-    setTouched({})
-    setSubmitted(false)
-  }, [])
+  const resetForm = useCallback(
+    (newValues = {}) => {
+      setValues(newValues);
+      setTouched({});
+      setSubmitted(false);
+      setDirty(false);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
 
-  const setFormValues = useCallback(newValues => {
-    setValues({ ...getValues(), ...newValues })
-  }, [])
+  const setFormValues = useCallback(
+    (newValues) => setValues({ ...getValues(), ...newValues }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
 
   const getFormValues = useCallback(
-    once(() => {
-      return cloneDeep(getValues()) as T
-    }),
+    () => cloneDeep(getValues()) as T,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
-  )
+  );
 
   return {
     field,
     handleSubmit,
     resetForm,
+    isDirty,
     getFormValues,
-    setFormValues
-  }
+    setFormValues,
+  };
 }
 
-export default useFormy
+export default useFormy;
