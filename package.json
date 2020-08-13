@@ -1,10 +1,10 @@
 {
   "name": "react-formy",
-  "version": "5.10.4",
+  "version": "5.9.1",
   "description": "A light, simple and fast way to keep form state",
   "main": "./lib/formy.js",
   "scripts": {
-    "build": "tsc",
+    "build": "webpack",
     "prepublishOnly": "yarn build"
   },
   "repository": {
@@ -26,11 +26,18 @@
     "react": "^16.10.2"
   },
   "dependencies": {
+    "lodash": "^4.17.19",
+    "memoizee": "^0.4.14"
+  },
+  "devDependencies": {
     "@types/lodash": "^4.14.159",
-    "@types/memoizee": "^0.4.3",
-    "@types/react": "^16.9.6",
-    "lodash": "^4.17.20",
-    "memoizee": "^0.4.14",
-    "typescript": "^3.9.7"
+    "@types/memoizee": "^0.4.4",
+    "@types/react": "^16.9.46",
+    "react": "^16.10.2",
+    "ts-loader": "^8.0.2",
+    "typescript": "^3.9.7",
+    "webpack": "^4.44.1",
+    "webpack-cli": "^3.3.12",
+    "webpack-node-externals": "^2.5.1"
   }
 }
