@@ -1,57 +1,23 @@
-import cloneDeep from 'lodash.clonedeep'
-import {
-  FormEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState
-} from 'react'
-import once from 'lodash/once'
+import cloneDeep from 'lodash/cloneDeep'
+import debounce from 'lodash/debounce'
 import get from 'lodash/get'
 import set from 'lodash/set'
-import debounce from 'lodash/debounce'
 import memoizee from 'memoizee'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  FieldOptions,
+  Formy,
+  FormyField,
+  FormyParams,
+  FormyValidator
+} from './types'
 
-type Nothing = undefined | null
-
-type Formy<T = any> = {
-  field: FormyField
-  handleSubmit: (fn: (values: any) => void) => (e: FormEvent) => void
-  resetForm: (newValues: Partial<T>) => void
-  getFormValues: () => Partial<T>
-  setFormValues: (newValues: any) => void
+export {
+  FormyValidator,
+  Formy,
+  FieldOptions,
+  FormyField
 }
-
-type FormyParams<T = any> = {
-  validate?: FormyValidator<Partial<T>>;
-  errorPropName?: string
-}
-
-export interface KeyValue<T = any> {
-  [k: string]: T
-}
-
-export type FormyValidator<T = any> = (
-  values: T
-) => Promise<KeyValue<string> | Nothing> | KeyValue<string> | Nothing
-
-export interface FieldOptions {
-  defaultValue?: any
-  onChange?: (newValue: any) => void
-  onBlur?: (e: FocusEvent) => void
-}
-
-export type FormyField = (
-  name: string,
-  options?: FieldOptions
-) => {
-  onChange: any
-  onBlur: any
-  name: any
-  value: any
-  [errorKey: string]: string
-} & any
 
 let globalErrorPropName = 'errorText'
 
@@ -76,7 +42,7 @@ function useStateRef<T = any>(
   ]
 }
 
-const getFieldOnChange = memoizee(
+const getFieldChangeListener = memoizee(
   (
     fieldPath: string,
     touched: { [key: string]: boolean },
@@ -93,7 +59,7 @@ const getFieldOnChange = memoizee(
   { length: 1 }
 )
 
-const getFieldOnBlur = memoizee(
+const getFieldBlurListener = memoizee(
   (
     fieldPath: string,
     touched: { [key: string]: boolean },
@@ -117,6 +83,7 @@ export function useFormy<T = any>({
   const [getValues, setValues] = useStateRef({})
   const [defaultValues, setInitialValues] = useState({} as any)
   const [touched, setTouched] = useState({} as any)
+  const [isDirty, setDirty] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [validationResult] = useState({})
   const [getValidationResult, setValidationResult] = useStateRef({})
@@ -151,10 +118,12 @@ export function useFormy<T = any>({
   }, [values])
 
   const onFieldChange = useMemo(
-    () => (fieldPath: string, e: any) =>
+    () => (fieldPath: string, e: any) => {
+      setDirty(true)
       setValues(
         set({ ...getValues() }, fieldPath, e && e.target ? e.target.value : e)
-      ),
+      )
+    },
     []
   )
 
@@ -218,13 +187,13 @@ export function useFormy<T = any>({
 
       Object.defineProperty(fieldProps, 'onChange', {
         enumerable: true,
-        value: getFieldOnChange(fieldPath, touched, setTouched, onFieldChange,
+        value: getFieldChangeListener(fieldPath, touched, setTouched, onFieldChange,
           onChange)
       })
 
       Object.defineProperty(fieldProps, 'onBlur', {
         enumerable: true,
-        value: getFieldOnBlur(fieldPath, touched, setTouched, onBlur)
+        value: getFieldBlurListener(fieldPath, touched, setTouched, onBlur)
       })
 
       return fieldProps
@@ -253,16 +222,16 @@ export function useFormy<T = any>({
     setValues(newValues)
     setTouched({})
     setSubmitted(false)
+    setDirty(false)
   }, [])
 
   const setFormValues = useCallback(newValues => {
     setValues({ ...getValues(), ...newValues })
   }, [])
 
-  const getFormValues = useCallback(
-    once(() => {
+  const getFormValues = useCallback(() => {
       return cloneDeep(getValues()) as T
-    }),
+    },
     []
   )
 
@@ -270,6 +239,7 @@ export function useFormy<T = any>({
     field,
     handleSubmit,
     resetForm,
+    isDirty,
     getFormValues,
     setFormValues
   }
