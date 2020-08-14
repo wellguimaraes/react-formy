@@ -9,15 +9,10 @@ import {
   Formy,
   FormyField,
   FormyParams,
-  FormyValidator
+  FormyValidator,
 } from './types'
 
-export {
-  FormyValidator,
-  Formy,
-  FieldOptions,
-  FormyField
-}
+export { FormyValidator, Formy, FieldOptions, FormyField }
 
 let globalErrorPropName = 'errorText'
 
@@ -73,9 +68,9 @@ const getFieldBlurListener = memoizee(
 )
 
 export function useFormy<T = any>({
-                                    validate,
-                                    errorPropName = globalErrorPropName
-                                  }: FormyParams<T> = {}): Formy<T> {
+  validate,
+  errorPropName = globalErrorPropName,
+}: FormyParams<T> = {}): Formy<T> {
   const validateRef = useRef(validate)
   const [getValues, setValues] = useStateRef({})
   const [defaultValues, setInitialValues] = useState({} as any)
@@ -93,7 +88,7 @@ export function useFormy<T = any>({
     []
   )
 
-  const runValidationRef = useRef(
+  const runValidation = useCallback(
     debounce(async (values: Partial<T>) => {
       const _validate = validateRef.current
       const _validationResult =
@@ -106,23 +101,20 @@ export function useFormy<T = any>({
       ) {
         setValidationResult(_validationResult || {})
       }
-    }, 300)
+    }, 300),
+    []
   )
 
   useEffect(() => {
-    const _validate = runValidationRef.current
-
-    if (typeof _validate === 'function') {
-      (_validate as FormyValidator)(values)
-    }
+    if (Object.keys(touched).length) runValidation?.(values)
   }, [values])
 
   const onFieldChange = useMemo(
     () => (fieldPath: string, e: any) => {
-      setDirty(true)
       setValues(
         set({ ...getValues() }, fieldPath, e && e.target ? e.target.value : e)
       )
+      setDirty(true)
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
@@ -152,7 +144,7 @@ export function useFormy<T = any>({
         get [errorPropName]() {
           const error = get(getValidationResult(), fieldPath)
           return (submitted && error) || (touched[fieldPath] && error)
-        }
+        },
       }
 
       Object.defineProperty(fieldProps, 'remove', {
@@ -165,25 +157,25 @@ export function useFormy<T = any>({
             fieldPath,
             (getFieldValue(fieldPath) as any[]).filter((_, i) => i !== index)
           )
-        }
+        },
       })
 
       Object.defineProperty(fieldProps, 'unshift', {
         value: (v: any) => {
           onFieldChange(fieldPath, [
             v,
-            ...((getFieldValue(fieldPath) || []) as any[])
+            ...((getFieldValue(fieldPath) || []) as any[]),
           ])
-        }
+        },
       })
 
       Object.defineProperty(fieldProps, 'push', {
         value: (v: any) => {
           onFieldChange(fieldPath, [
             ...((getFieldValue(fieldPath) || []) as any[]),
-            v
+            v,
           ])
-        }
+        },
       })
 
       Object.defineProperty(fieldProps, 'onChange', {
@@ -194,12 +186,12 @@ export function useFormy<T = any>({
           setTouched,
           onFieldChange,
           onChange
-        )
+        ),
       })
 
       Object.defineProperty(fieldProps, 'onBlur', {
         enumerable: true,
-        value: getFieldBlurListener(fieldPath, touched, setTouched, onBlur)
+        value: getFieldBlurListener(fieldPath, touched, setTouched, onBlur),
       })
 
       return fieldProps
@@ -222,12 +214,10 @@ export function useFormy<T = any>({
 
       setSubmitting(true)
 
-      Promise
-        .resolve(onSubmit?.(getValues()))
-        .then(
-          () => setSubmitting(false),
-          () => setSubmitting(false)
-        )
+      Promise.resolve(onSubmit?.(getValues())).then(
+        () => setSubmitting(false),
+        () => setSubmitting(false)
+      )
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
@@ -263,7 +253,7 @@ export function useFormy<T = any>({
     isDirty,
     isSubmitting,
     getFormValues,
-    setFormValues
+    setFormValues,
   }
 }
 
