@@ -8,6 +8,7 @@ export type Formy<T = any> = {
   resetForm: (newValues: Partial<T>) => void
   getFormValues: () => Partial<T>
   isDirty: boolean,
+  isSubmitting: boolean,
   setFormValues: (newValues: any) => void
 }
 
