@@ -37,6 +37,7 @@ function useStateRef<T = any>(
 
 const getFieldChangeListener = memoizee(
   (
+    formId: string, // for memo disambiguation only
     fieldPath: string,
     touched: { [key: string]: boolean },
     setTouched: (value: unknown) => void,
@@ -54,6 +55,7 @@ const getFieldChangeListener = memoizee(
 
 const getFieldBlurListener = memoizee(
   (
+    formId: string, // for memo disambiguation only
     fieldPath: string,
     touched: { [key: string]: boolean },
     setTouched: (value: unknown) => void,
@@ -67,10 +69,10 @@ const getFieldBlurListener = memoizee(
   { length: 1 }
 )
 
-export function useFormy<T = any>({
-  validate,
-  errorPropName = globalErrorPropName,
-}: FormyParams<T> = {}): Formy<T> {
+export function useFormy<T = any>(options: FormyParams<T> = {}): Formy<T> {
+  const { validate, errorPropName = globalErrorPropName } = options
+
+  const formId = useMemo(() => Math.random().toString(36), [])
   const validateRef = useRef(validate)
   const [getValues, setValues] = useStateRef({})
   const [defaultValues, setInitialValues] = useState({} as any)
@@ -106,7 +108,9 @@ export function useFormy<T = any>({
   )
 
   useEffect(() => {
-    if (Object.keys(touched).length) runValidation?.(values)
+    if (Object.keys(touched).length) {
+      runValidation?.(values)
+    }
   }, [values])
 
   const onFieldChange = useMemo(
@@ -181,6 +185,7 @@ export function useFormy<T = any>({
       Object.defineProperty(fieldProps, 'onChange', {
         enumerable: true,
         value: getFieldChangeListener(
+          formId,
           fieldPath,
           touched,
           setTouched,
@@ -191,7 +196,13 @@ export function useFormy<T = any>({
 
       Object.defineProperty(fieldProps, 'onBlur', {
         enumerable: true,
-        value: getFieldBlurListener(fieldPath, touched, setTouched, onBlur),
+        value: getFieldBlurListener(
+          formId,
+          fieldPath,
+          touched,
+          setTouched,
+          onBlur
+        ),
       })
 
       return fieldProps
