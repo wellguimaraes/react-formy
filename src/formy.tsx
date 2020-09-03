@@ -50,7 +50,7 @@ const getFieldChangeListener = memoizee(
     onFieldChange(fieldPath, e)
     typeof onChange === 'function' && onChange(e)
   },
-  { length: 1 }
+  { length: 2 }
 )
 
 const getFieldBlurListener = memoizee(
@@ -66,7 +66,7 @@ const getFieldBlurListener = memoizee(
     }
     typeof onBlur === 'function' && onBlur(e)
   },
-  { length: 1 }
+  { length: 2 }
 )
 
 export function useFormy<T = any>(options: FormyParams<T> = {}): Formy<T> {
@@ -90,26 +90,30 @@ export function useFormy<T = any>(options: FormyParams<T> = {}): Formy<T> {
     []
   )
 
-  const runValidation = useCallback(
-    debounce(async (values: Partial<T>) => {
-      const _validate = validateRef.current
-      const _validationResult =
-        (typeof _validate === 'function' && (await _validate(values))) || {}
-      const _currentValidationResult = getValidationResult() || {}
+  const runValidation = useCallback(async (values: Partial<T>) => {
+    const _validate = validateRef.current
+    const _validationResult =
+      (typeof _validate === 'function' && (await _validate(values))) || {}
+    const _currentValidationResult = getValidationResult() || {}
 
-      if (
-        JSON.stringify(_currentValidationResult) !==
-        JSON.stringify(_validationResult)
-      ) {
-        setValidationResult(_validationResult || {})
-      }
-    }, 300),
+    if (
+      JSON.stringify(_currentValidationResult) !==
+      JSON.stringify(_validationResult)
+    ) {
+      setValidationResult(_validationResult || {})
+    }
+
+    return _validationResult
+  }, [])
+
+  const runDebouncedValidation = useCallback(
+    debounce(runValidation, 300),
     []
   )
 
   useEffect(() => {
     if (Object.keys(touched).length) {
-      runValidation?.(values)
+      runDebouncedValidation?.(values)
     }
   }, [values])
 
@@ -137,19 +141,26 @@ export function useFormy<T = any>(options: FormyParams<T> = {}): Formy<T> {
       }
 
       // noinspection JSUnusedGlobalSymbols
-      const fieldProps = {
-        set value(newValue) {
+      const fieldProps = {}
+
+      Object.defineProperty(fieldProps, 'value', {
+        enumerable: true,
+        set: (newValue) => {
           setTimeout(() => onFieldChange(fieldPath, newValue))
         },
-        get value() {
+        get: () => {
           const currentValue = getFieldValue(fieldPath)
           return currentValue === undefined ? '' : currentValue
         },
-        get [errorPropName]() {
+      })
+
+      Object.defineProperty(fieldProps, errorPropName, {
+        enumerable: true,
+        get: () => {
           const error = get(getValidationResult(), fieldPath)
           return (submitted && error) || (touched[fieldPath] && error)
         },
-      }
+      })
 
       Object.defineProperty(fieldProps, 'remove', {
         value: (index: number) => {
@@ -212,18 +223,17 @@ export function useFormy<T = any>(options: FormyParams<T> = {}): Formy<T> {
   )
 
   const handleSubmit = useCallback(
-    (onSubmit) => (e: any) => {
+    (onSubmit) => async (e: any) => {
       e.preventDefault()
 
+      setSubmitting(true)
       setSubmitted(true)
 
-      const validationResult = getValidationResult()
+      const validationResult = await runValidation(getValues())
 
       if (validationResult && Object.keys(validationResult).length) {
         return
       }
-
-      setSubmitting(true)
 
       Promise.resolve(onSubmit?.(getValues())).then(
         () => setSubmitting(false),
