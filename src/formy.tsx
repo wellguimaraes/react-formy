@@ -39,18 +39,19 @@ const getFieldChangeListener = memoizee(
   (
     formId: string, // for memo disambiguation only
     fieldPath: string,
+    submitted: boolean,
     touched: { [key: string]: boolean },
     setTouched: (value: unknown) => void,
     onFieldChange: (fieldPath: string, e: any) => void,
-    onChange: (e: any) => void
+    customOnChange: (e: any) => void
   ) => (e: any) => {
-    if (!touched[fieldPath]) {
+    if (!touched[fieldPath] && submitted) {
       setTouched({ ...touched, [fieldPath]: true })
     }
     onFieldChange(fieldPath, e)
-    typeof onChange === 'function' && onChange(e)
+    typeof customOnChange === 'function' && customOnChange(e)
   },
-  { length: 2 }
+  { length: 4 }
 )
 
 const getFieldBlurListener = memoizee(
@@ -66,7 +67,7 @@ const getFieldBlurListener = memoizee(
     }
     typeof onBlur === 'function' && onBlur(e)
   },
-  { length: 2 }
+  { length: 3 }
 )
 
 export function useFormy<T = any>(options: FormyParams<T> = {}): Formy<T> {
@@ -129,7 +130,7 @@ export function useFormy<T = any>(options: FormyParams<T> = {}): Formy<T> {
   )
 
   const field = useCallback(
-    (fieldPath, { onChange, onBlur, defaultValue } = {}) => {
+    (fieldPath, { onChange: customOnChange, onBlur, defaultValue } = {}) => {
       if (
         defaultValue !== undefined &&
         defaultValues[fieldPath] !== defaultValue
@@ -198,10 +199,11 @@ export function useFormy<T = any>(options: FormyParams<T> = {}): Formy<T> {
         value: getFieldChangeListener(
           formId,
           fieldPath,
+          submitted,
           touched,
           setTouched,
           onFieldChange,
-          onChange
+          customOnChange
         ),
       })
 
