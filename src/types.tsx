@@ -9,7 +9,8 @@ export type Formy<T = any> = {
   getFormValues: () => Partial<T>
   isDirty: boolean,
   isSubmitting: boolean,
-  setFormValues: (newValues: any) => void
+  setFormValues: (newValues: any) => void,
+  setValidationFn: (newValidationFn: FormyValidator<Partial<T>>) => void
 }
 
 export type FormyParams<T = any> = {
