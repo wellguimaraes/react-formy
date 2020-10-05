@@ -165,7 +165,7 @@ export function useFormy<T = any>(options: FormyParams<T> = {}): Formy<T> {
 
       Object.defineProperty(fieldProps, 'remove', {
         value: (index: number) => {
-          if (Array.isArray(getFieldValue(fieldPath))) {
+          if (!Array.isArray(getFieldValue(fieldPath))) {
             return
           }
 
