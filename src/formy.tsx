@@ -269,6 +269,11 @@ export function useFormy<T = any>(options: FormyParams<T> = {}): Formy<T> {
     []
   )
 
+  const setValidationFn = useCallback((newValidationFn: FormyValidator<Partial<T>>) => {
+    validateRef.current = newValidationFn
+    runDebouncedValidation?.(getValues())
+  }, [getValues, runDebouncedValidation])
+
   return {
     field,
     handleSubmit,
@@ -277,6 +282,7 @@ export function useFormy<T = any>(options: FormyParams<T> = {}): Formy<T> {
     isSubmitting,
     getFormValues,
     setFormValues,
+    setValidationFn,
   }
 }
 
