@@ -7,13 +7,13 @@ export type Formy<T = any> = {
   handleSubmit: (fn: (values: any) => void) => (e: FormEvent) => void
   resetForm: (newValues: Partial<T>) => void
   getFormValues: () => Partial<T>
-  isDirty: boolean,
-  isSubmitting: boolean,
+  isDirty: boolean
+  isSubmitting: boolean
   setFormValues: (newValues: any) => void
 }
 
 export type FormyParams<T = any> = {
-  validate?: FormyValidator<Partial<T>>;
+  validate?: FormyValidator<Partial<T>>
   errorPropName?: string
 }
 
@@ -22,12 +22,12 @@ export interface KeyValue<T = any> {
 }
 
 export type FormyValidator<T = any> = (
-  values: T
+  values: T,
 ) => Promise<KeyValue<string> | Nothing> | KeyValue<string> | Nothing
 
 export type FormyField = (
   name: string,
-  options?: FieldOptions
+  options?: FieldOptions,
 ) => {
   onChange: any
   onBlur: any

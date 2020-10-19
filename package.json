@@ -1,44 +1,78 @@
 {
   "name": "react-formy",
   "version": "5.12.7",
-  "description": "A light, simple and fast way to keep form state",
-  "main": "./lib/formy.js",
-  "scripts": {
-    "build": "webpack",
-    "prepublishOnly": "yarn build"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/wellguimaraes/react-formy.git"
-  },
-  "keywords": [
-    "react",
-    "forms",
-    "state"
-  ],
   "author": "Wellington Guimaraes",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/wellguimaraes/react-formy/issues"
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "engines": {
+    "node": ">=10"
   },
-  "homepage": "https://github.com/wellguimaraes/react-formy#readme",
+  "scripts": {
+    "start": "tsdx watch",
+    "build": "tsdx build",
+    "test": "tsdx test --passWithNoTests",
+    "prepare": "tsdx build",
+    "size": "size-limit",
+    "analyze": "size-limit --why",
+    "storybook": "start-storybook -p 6006",
+    "build-storybook": "build-storybook"
+  },
   "peerDependencies": {
-    "react": "^16.10.2"
+    "react": ">=16"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn test"
+    }
+  },
+  "prettier": {
+    "semi": false,
+    "singleQuote": true,
+    "arrowParens": "avoid",
+    "endOfLine": "lf",
+    "trailingComma": "all"
+  },
+  "module": "dist/react-formy.esm.js",
+  "size-limit": [
+    {
+      "path": "dist/react-formy.cjs.production.min.js",
+      "limit": "10 KB"
+    },
+    {
+      "path": "dist/react-formy.esm.js",
+      "limit": "10 KB"
+    }
+  ],
+  "devDependencies": {
+    "@babel/core": "^7.12.3",
+    "@size-limit/preset-small-lib": "^4.6.0",
+    "@storybook/addon-essentials": "^6.0.26",
+    "@storybook/addon-info": "^5.3.21",
+    "@storybook/addon-links": "^6.0.26",
+    "@storybook/addons": "^6.0.26",
+    "@storybook/react": "^6.0.26",
+    "@types/lodash": "^4.14.162",
+    "@types/memoizee": "^0.4.4",
+    "@types/react": "^16.9.53",
+    "@types/react-dom": "^16.9.8",
+    "babel-loader": "^8.1.0",
+    "husky": "^4.3.0",
+    "react": "^16.14.0",
+    "react-dom": "^16.14.0",
+    "react-is": "^16.13.1",
+    "size-limit": "^4.6.0",
+    "tsdx": "^0.14.1",
+    "tslib": "^2.0.3",
+    "typescript": "^4.0.3"
   },
   "dependencies": {
-    "lodash": "^4.17.19",
+    "lodash": "^4.17.20",
+    "lodash-es": "^4.17.15",
     "memoizee": "^0.4.14"
-  },
-  "devDependencies": {
-    "@types/lodash": "^4.14.159",
-    "@types/memoizee": "^0.4.4",
-    "@types/react": "^16.9.46",
-    "prettier": "^2.0.5",
-    "react": "^16.10.2",
-    "ts-loader": "^8.0.2",
-    "typescript": "^3.9.7",
-    "webpack": "^4.44.1",
-    "webpack-cli": "^3.3.12",
-    "webpack-node-externals": "^2.5.1"
   }
 }

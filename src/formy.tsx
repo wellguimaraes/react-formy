@@ -4,15 +4,7 @@ import get from 'lodash/get'
 import set from 'lodash/set'
 import memoizee from 'memoizee'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import {
-  FieldOptions,
-  Formy,
-  FormyField,
-  FormyParams,
-  FormyValidator,
-} from './types'
-
-export { FormyValidator, Formy, FieldOptions, FormyField }
+import { Formy, FormyParams } from './types'
 
 let globalErrorPropName = 'errorText'
 
@@ -21,13 +13,13 @@ export function setErrorPropName(name: string) {
 }
 
 function useStateRef<T = any>(
-  initialValue?: T
+  initialValue?: T,
 ): [() => T, (newValue: T) => void] {
   const [value, setValue] = useState(initialValue)
   const valueRef = useRef(value)
   valueRef.current = value
   const getCurrentValue = useCallback(() => valueRef.current as T, [])
-  const setCurrentValue = useCallback((v) => {
+  const setCurrentValue = useCallback(v => {
     setValue(v)
     valueRef.current = v
   }, [])
@@ -37,13 +29,13 @@ function useStateRef<T = any>(
 
 const getFieldChangeListener = memoizee(
   (
-    formId: string, // for memo disambiguation only
+    _formId: string, // for memo disambiguation only
     fieldPath: string,
     submitted: boolean,
     touched: { [key: string]: boolean },
     setTouched: (value: unknown) => void,
     onFieldChange: (fieldPath: string, e: any) => void,
-    customOnChange: (e: any) => void
+    customOnChange: (e: any) => void,
   ) => (e: any) => {
     if (!touched[fieldPath] && submitted) {
       setTouched({ ...touched, [fieldPath]: true })
@@ -51,23 +43,23 @@ const getFieldChangeListener = memoizee(
     onFieldChange(fieldPath, e)
     typeof customOnChange === 'function' && customOnChange(e)
   },
-  { length: 4 }
+  { length: 4 },
 )
 
 const getFieldBlurListener = memoizee(
   (
-    formId: string, // for memo disambiguation only
+    _formId: string, // for memo disambiguation only
     fieldPath: string,
     touched: { [key: string]: boolean },
     setTouched: (value: unknown) => void,
-    onBlur: (e: any) => any
+    onBlur: (e: any) => any,
   ) => (e: any) => {
     if (!touched[fieldPath]) {
       setTouched({ ...touched, [fieldPath]: true })
     }
     typeof onBlur === 'function' && onBlur(e)
   },
-  { length: 3 }
+  { length: 3 },
 )
 
 export function useFormy<T = any>(options: FormyParams<T> = {}): Formy<T> {
@@ -86,9 +78,9 @@ export function useFormy<T = any>(options: FormyParams<T> = {}): Formy<T> {
   const values = getValues()
 
   const getFieldValue = useCallback(
-    (fieldPath) => get(getValues(), fieldPath),
+    fieldPath => get(getValues(), fieldPath),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [],
   )
 
   const runValidation = useCallback(async (values: Partial<T>) => {
@@ -107,10 +99,7 @@ export function useFormy<T = any>(options: FormyParams<T> = {}): Formy<T> {
     return _validationResult
   }, [])
 
-  const runDebouncedValidation = useCallback(
-    debounce(runValidation, 300),
-    []
-  )
+  const runDebouncedValidation = useCallback(debounce(runValidation, 300), [])
 
   useEffect(() => {
     if (Object.keys(touched).length) {
@@ -121,12 +110,12 @@ export function useFormy<T = any>(options: FormyParams<T> = {}): Formy<T> {
   const onFieldChange = useMemo(
     () => (fieldPath: string, e: any) => {
       setValues(
-        set({ ...getValues() }, fieldPath, e && e.target ? e.target.value : e)
+        set({ ...getValues() }, fieldPath, e && e.target ? e.target.value : e),
       )
       setDirty(true)
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [],
   )
 
   const field = useCallback(
@@ -146,7 +135,7 @@ export function useFormy<T = any>(options: FormyParams<T> = {}): Formy<T> {
 
       Object.defineProperty(fieldProps, 'value', {
         enumerable: true,
-        set: (newValue) => {
+        set: newValue => {
           setTimeout(() => onFieldChange(fieldPath, newValue))
         },
         get: () => {
@@ -171,7 +160,7 @@ export function useFormy<T = any>(options: FormyParams<T> = {}): Formy<T> {
 
           onFieldChange(
             fieldPath,
-            (getFieldValue(fieldPath) as any[]).filter((_, i) => i !== index)
+            (getFieldValue(fieldPath) as any[]).filter((_, i) => i !== index),
           )
         },
       })
@@ -203,7 +192,7 @@ export function useFormy<T = any>(options: FormyParams<T> = {}): Formy<T> {
           touched,
           setTouched,
           onFieldChange,
-          customOnChange
+          customOnChange,
         ),
       })
 
@@ -214,18 +203,18 @@ export function useFormy<T = any>(options: FormyParams<T> = {}): Formy<T> {
           fieldPath,
           touched,
           setTouched,
-          onBlur
+          onBlur,
         ),
       })
 
       return fieldProps
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [validationResult, defaultValues, errorPropName, touched, submitted]
+    [validationResult, defaultValues, errorPropName, touched, submitted],
   )
 
   const handleSubmit = useCallback(
-    (onSubmit) => async (e: any) => {
+    onSubmit => async (e: any) => {
       e.preventDefault()
 
       setSubmitting(true)
@@ -239,11 +228,11 @@ export function useFormy<T = any>(options: FormyParams<T> = {}): Formy<T> {
 
       Promise.resolve(onSubmit?.(getValues())).then(
         () => setSubmitting(false),
-        () => setSubmitting(false)
+        () => setSubmitting(false),
       )
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [],
   )
 
   const resetForm = useCallback(
@@ -254,19 +243,19 @@ export function useFormy<T = any>(options: FormyParams<T> = {}): Formy<T> {
       setDirty(false)
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [],
   )
 
   const setFormValues = useCallback(
-    (newValues) => setValues({ ...getValues(), ...newValues }),
+    newValues => setValues({ ...getValues(), ...newValues }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [],
   )
 
   const getFormValues = useCallback(
     () => cloneDeep(getValues()) as T,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [],
   )
 
   return {
