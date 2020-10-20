@@ -1,6 +1,6 @@
 {
   "name": "react-formy",
-  "version": "5.13.0",
+  "version": "5.13.1",
   "author": "Wellington Guimaraes",
   "license": "MIT",
   "main": "dist/index.js",
