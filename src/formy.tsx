@@ -2,7 +2,7 @@ import cloneDeep from 'lodash/cloneDeep'
 import debounce from 'lodash/debounce'
 import get from 'lodash/get'
 import set from 'lodash/set'
-import memoizee from 'memoizee'
+import memoize from 'moize'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Formy, FormyParams } from './types'
 
@@ -27,7 +27,7 @@ function useStateRef<T = any>(
   return [getCurrentValue, setCurrentValue]
 }
 
-const getFieldChangeListener = memoizee(
+const getFieldChangeListener = memoize(
   (
     _formId: string, // for memo disambiguation only
     fieldPath: string,
@@ -43,10 +43,10 @@ const getFieldChangeListener = memoizee(
     onFieldChange(fieldPath, e)
     typeof customOnChange === 'function' && customOnChange(e)
   },
-  { length: 4 },
+  { maxArgs: 4 },
 )
 
-const getFieldBlurListener = memoizee(
+const getFieldBlurListener = memoize(
   (
     _formId: string, // for memo disambiguation only
     fieldPath: string,
@@ -59,7 +59,9 @@ const getFieldBlurListener = memoizee(
     }
     typeof onBlur === 'function' && onBlur(e)
   },
-  { length: 3 },
+  {
+    maxArgs: 3
+  },
 )
 
 export function useFormy<T = any>(options: FormyParams<T> = {}): Formy<T> {
