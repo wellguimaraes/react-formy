@@ -1,5 +1,5 @@
-import { useFormy } from './formy'
+import { useFormy, setErrorPropName } from './formy'
 
-export { useFormy }
-export default useFormy
+export { useFormy, setErrorPropName }
 export { FormyValidator, Formy, FieldOptions, FormyField } from './types'
+export default useFormy
